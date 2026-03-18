@@ -16,7 +16,7 @@
 ## Phase 2 — Infrastructure for Bindings
 
 - [x] 8. DOM Data Storage (per-node key/value via WeakMap)
-- [ ] 9. DOM Node Disposal (cleanup callbacks on node removal)
+- [x] 9. DOM Node Disposal (cleanup callbacks on node removal)
 - [ ] 10. Virtual Elements (`<!-- ko -->` comment-based containers)
 - [ ] 11. Expression Rewriting / Binding Parser
 - [ ] 12. Microtask Scheduler

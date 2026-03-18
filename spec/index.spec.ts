@@ -34,6 +34,10 @@ import {
   domDataGetOrSet,
   domDataClear,
   domDataNextKey,
+  addDisposeCallback,
+  removeDisposeCallback,
+  cleanNode,
+  removeNode,
 } from '#src/index.js';
 
 describe('index exports', () => {
@@ -145,5 +149,12 @@ describe('index exports', () => {
     expect(domDataGetOrSet).toBeDefined();
     expect(domDataClear).toBeDefined();
     expect(domDataNextKey).toBeDefined();
+  });
+
+  it('exports domNodeDisposal functions', () => {
+    expect(addDisposeCallback).toBeDefined();
+    expect(removeDisposeCallback).toBeDefined();
+    expect(cleanNode).toBeDefined();
+    expect(removeNode).toBeDefined();
   });
 });
