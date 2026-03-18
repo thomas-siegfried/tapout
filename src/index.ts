@@ -14,6 +14,11 @@ export type { TrackingFrame } from './dependencyDetection.js';
 
 export { Observable, isObservable } from './observable.js';
 
+export { ObservableArray, isObservableArray, DESTROY, isDestroyed } from './observableArray.js';
+
+export { compareArrays, findMovesInArrayComparison } from './compareArrays.js';
+export type { ArrayChange, CompareArraysOptions } from './compareArrays.js';
+
 export { Computed, PureComputed, isComputed, isPureComputed } from './computed.js';
 export type { ComputedOptions } from './computed.js';
 

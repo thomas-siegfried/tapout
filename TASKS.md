@@ -2,14 +2,14 @@
 
 ## Phase 1 — Reactivity Core
 
-- [ ] 1. Subscribable (base class for all reactive primitives)
-- [ ] 2. Dependency Detection (stack-based tracking engine)
-- [ ] 3. Observable (read/write reactive value)
-- [ ] 4a. Computed — basic (derived observable with dependency tracking)
-- [ ] 4b. Computed — writable (supports a write function)
-- [ ] 4c. Pure Computed (sleep/wake optimization)
+- [x] 1. Subscribable (base class for all reactive primitives)
+- [x] 2. Dependency Detection (stack-based tracking engine)
+- [x] 3. Observable (read/write reactive value)
+- [x] 4a. Computed — basic (derived observable with dependency tracking)
+- [x] 4b. Computed — writable (supports a write function)
+- [x] 4c. Pure Computed (sleep/wake optimization)
 - [ ] 4d. Computed — deferred evaluation (lazy first eval)
-- [ ] 5. Observable Array (array mutations with change tracking)
+- [x] 5. Observable Array (array mutations with change tracking)
 - [ ] 6. Extenders (`notify`, `rateLimit`, `deferred`)
 - [ ] 7. Utilities — `toJS`, `toJSON`, `when`
 

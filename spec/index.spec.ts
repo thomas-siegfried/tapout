@@ -13,6 +13,12 @@ import {
   Observable,
   isObservable,
   isWritableObservable,
+  ObservableArray,
+  isObservableArray,
+  DESTROY,
+  isDestroyed,
+  compareArrays,
+  findMovesInArrayComparison,
   Computed,
   PureComputed,
   isComputed,
@@ -56,6 +62,30 @@ describe('index exports', () => {
 
   it('exports isWritableObservable', () => {
     expect(isWritableObservable).toBeDefined();
+  });
+
+  it('exports ObservableArray', () => {
+    expect(ObservableArray).toBeDefined();
+  });
+
+  it('exports isObservableArray', () => {
+    expect(isObservableArray).toBeDefined();
+  });
+
+  it('exports DESTROY symbol', () => {
+    expect(typeof DESTROY).toBe('symbol');
+  });
+
+  it('exports isDestroyed', () => {
+    expect(isDestroyed).toBeDefined();
+  });
+
+  it('exports compareArrays', () => {
+    expect(compareArrays).toBeDefined();
+  });
+
+  it('exports findMovesInArrayComparison', () => {
+    expect(findMovesInArrayComparison).toBeDefined();
   });
 
   it('exports Computed', () => {
