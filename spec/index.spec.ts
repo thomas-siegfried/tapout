@@ -26,6 +26,9 @@ import {
   registerExtender,
   throttle,
   debounce,
+  toJS,
+  toJSON,
+  when,
 } from '#src/index.js';
 
 describe('index exports', () => {
@@ -117,5 +120,17 @@ describe('index exports', () => {
 
   it('exports debounce', () => {
     expect(debounce).toBeDefined();
+  });
+
+  it('exports toJS', () => {
+    expect(toJS).toBeDefined();
+  });
+
+  it('exports toJSON', () => {
+    expect(toJSON).toBeDefined();
+  });
+
+  it('exports when', () => {
+    expect(when).toBeDefined();
   });
 });

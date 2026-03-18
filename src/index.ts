@@ -25,6 +25,8 @@ export type { ComputedOptions } from './computed.js';
 export { registerExtender, throttle, debounce } from './extenders.js';
 export type { ExtenderHandler, RateLimitOptions } from './extenders.js';
 
+export { toJS, toJSON, when } from './utils.js';
+
 import { Observable } from './observable.js';
 import { Computed } from './computed.js';
 

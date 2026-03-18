@@ -11,7 +11,7 @@
 - [x] 4d. Computed — deferred evaluation (lazy first eval)
 - [x] 5. Observable Array (array mutations with change tracking)
 - [x] 6. Extenders (`notify`, `rateLimit`; `deferred` deferred to Phase 2 with microtask scheduler)
-- [ ] 7. Utilities — `toJS`, `toJSON`, `when`
+- [x] 7. Utilities — `toJS`, `toJSON`, `when`
 
 ## Phase 2 — Infrastructure for Bindings
 
