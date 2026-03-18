@@ -58,6 +58,18 @@ export {
 } from './expressionRewriting.js';
 export type { KeyValuePair, PreProcessOptions, AllBindingsAccessor } from './expressionRewriting.js';
 
+export {
+  BindingContext,
+  contextFor,
+  dataFor,
+  storedBindingContextForNode,
+  SUBSCRIBABLE,
+  ANCESTOR_BINDING_INFO,
+  DATA_DEPENDENCY,
+  BINDING_INFO_KEY,
+} from './bindingContext.js';
+export type { BindingContextOptions, CreateChildContextOptions, ExtendCallback } from './bindingContext.js';
+
 import { Observable } from './observable.js';
 import { Computed } from './computed.js';
 

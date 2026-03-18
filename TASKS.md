@@ -23,7 +23,7 @@
 
 ## Phase 3 — Binding System
 
-- [ ] 13. Binding Context (`$data`, `$parent`, `$root`, etc.)
+- [x] 13. Binding Context (`$data`, `$parent`, `$root`, etc.)
 - [ ] 14. Binding Provider (reads `data-bind` attributes)
 - [ ] 15. `applyBindings` Core (DOM tree walk, init/update lifecycle)
 - [ ] 16. Binding Events (`childrenComplete`, `descendantsComplete`)

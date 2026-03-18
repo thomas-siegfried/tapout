@@ -59,6 +59,14 @@ import {
   runEarly,
   resetForTesting,
   tasks,
+  BindingContext,
+  contextFor,
+  dataFor,
+  storedBindingContextForNode,
+  SUBSCRIBABLE,
+  ANCESTOR_BINDING_INFO,
+  DATA_DEPENDENCY,
+  BINDING_INFO_KEY,
 } from '#src/index.js';
 
 describe('index exports', () => {
@@ -214,5 +222,22 @@ describe('index exports', () => {
     expect(tasks.cancel).toBe(cancel);
     expect(tasks.runEarly).toBe(runEarly);
     expect(tasks.resetForTesting).toBe(resetForTesting);
+  });
+
+  it('exports BindingContext', () => {
+    expect(BindingContext).toBeDefined();
+  });
+
+  it('exports context retrieval functions', () => {
+    expect(contextFor).toBeDefined();
+    expect(dataFor).toBeDefined();
+    expect(storedBindingContextForNode).toBeDefined();
+  });
+
+  it('exports binding context symbols and keys', () => {
+    expect(typeof SUBSCRIBABLE).toBe('symbol');
+    expect(typeof ANCESTOR_BINDING_INFO).toBe('symbol');
+    expect(typeof DATA_DEPENDENCY).toBe('symbol');
+    expect(typeof BINDING_INFO_KEY).toBe('string');
   });
 });
