@@ -18,6 +18,7 @@ export interface PreProcessOptions {
 
 export interface AllBindingsAccessor {
   get(key: string): unknown;
+  has(key: string): boolean;
 }
 
 // ---- Two-way binding registry ----

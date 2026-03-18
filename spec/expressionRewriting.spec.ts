@@ -257,14 +257,14 @@ describe('expressionRewriting', () => {
   describe('writeValueToProperty', () => {
     it('writes directly to a writable observable', () => {
       const obs = new Observable('old');
-      const allBindings: AllBindingsAccessor = { get: () => undefined };
+      const allBindings: AllBindingsAccessor = { get: () => undefined, has: () => false };
       writeValueToProperty(obs, allBindings, 'value', 'new');
       expect(obs.peek()).toBe('new');
     });
 
     it('skips write when checkIfDifferent is true and value is the same', () => {
       const obs = new Observable('same');
-      const allBindings: AllBindingsAccessor = { get: () => undefined };
+      const allBindings: AllBindingsAccessor = { get: () => undefined, has: () => false };
       spyOn(obs, 'set');
       writeValueToProperty(obs, allBindings, 'value', 'same', true);
       expect(obs.set).not.toHaveBeenCalled();
@@ -272,7 +272,7 @@ describe('expressionRewriting', () => {
 
     it('writes when checkIfDifferent is true but value is different', () => {
       const obs = new Observable('old');
-      const allBindings: AllBindingsAccessor = { get: () => undefined };
+      const allBindings: AllBindingsAccessor = { get: () => undefined, has: () => false };
       writeValueToProperty(obs, allBindings, 'value', 'new', true);
       expect(obs.peek()).toBe('new');
     });
@@ -283,7 +283,7 @@ describe('expressionRewriting', () => {
         read: () => obs.get(),
         write: (val: string) => obs.set(val),
       });
-      const allBindings: AllBindingsAccessor = { get: () => undefined };
+      const allBindings: AllBindingsAccessor = { get: () => undefined, has: () => false };
       writeValueToProperty(comp, allBindings, 'value', 'new');
       expect(obs.peek()).toBe('new');
     });
@@ -293,6 +293,7 @@ describe('expressionRewriting', () => {
       const writers = { value: (v: unknown) => { written = v; } };
       const allBindings: AllBindingsAccessor = {
         get: (key: string) => key === '_ko_property_writers' ? writers : undefined,
+        has: () => false,
       };
       writeValueToProperty('not-an-observable', allBindings, 'value', 'hello');
       expect(written).toBe('hello');
@@ -303,13 +304,14 @@ describe('expressionRewriting', () => {
       const writers = { value: (v: unknown) => { written = v; } };
       const allBindings: AllBindingsAccessor = {
         get: (key: string) => key === '_ko_property_writers' ? writers : undefined,
+        has: () => false,
       };
       writeValueToProperty(null, allBindings, 'value', 42);
       expect(written).toBe(42);
     });
 
     it('does nothing when no observable and no property writers', () => {
-      const allBindings: AllBindingsAccessor = { get: () => undefined };
+      const allBindings: AllBindingsAccessor = { get: () => undefined, has: () => false };
       expect(() => writeValueToProperty('plain', allBindings, 'value', 'test')).not.toThrow();
     });
   });

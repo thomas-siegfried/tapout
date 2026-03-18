@@ -71,6 +71,9 @@ import {
   bindingHandlers,
   getBindingHandler,
   bindingProviderInstance,
+  applyBindings,
+  applyBindingsToDescendants,
+  applyBindingsToNode,
 } from '#src/index.js';
 
 describe('index exports', () => {
@@ -256,5 +259,11 @@ describe('index exports', () => {
 
   it('exports binding provider singleton instance', () => {
     expect(bindingProviderInstance).toBeInstanceOf(BindingProvider);
+  });
+
+  it('exports applyBindings functions', () => {
+    expect(applyBindings).toBeDefined();
+    expect(applyBindingsToDescendants).toBeDefined();
+    expect(applyBindingsToNode).toBeDefined();
   });
 });

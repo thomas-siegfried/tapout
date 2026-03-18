@@ -78,6 +78,12 @@ export {
 } from './bindingProvider.js';
 export type { BindingHandler } from './bindingProvider.js';
 
+export {
+  applyBindings,
+  applyBindingsToDescendants,
+  applyBindingsToNode,
+} from './applyBindings.js';
+
 import { Observable } from './observable.js';
 import { Computed } from './computed.js';
 
