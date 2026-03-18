@@ -67,6 +67,10 @@ import {
   ANCESTOR_BINDING_INFO,
   DATA_DEPENDENCY,
   BINDING_INFO_KEY,
+  BindingProvider,
+  bindingHandlers,
+  getBindingHandler,
+  bindingProviderInstance,
 } from '#src/index.js';
 
 describe('index exports', () => {
@@ -239,5 +243,18 @@ describe('index exports', () => {
     expect(typeof ANCESTOR_BINDING_INFO).toBe('symbol');
     expect(typeof DATA_DEPENDENCY).toBe('symbol');
     expect(typeof BINDING_INFO_KEY).toBe('string');
+  });
+
+  it('exports BindingProvider', () => {
+    expect(BindingProvider).toBeDefined();
+  });
+
+  it('exports binding handler registry', () => {
+    expect(bindingHandlers).toBeDefined();
+    expect(getBindingHandler).toBeDefined();
+  });
+
+  it('exports binding provider singleton instance', () => {
+    expect(bindingProviderInstance).toBeInstanceOf(BindingProvider);
   });
 });

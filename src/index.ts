@@ -70,6 +70,14 @@ export {
 } from './bindingContext.js';
 export type { BindingContextOptions, CreateChildContextOptions, ExtendCallback } from './bindingContext.js';
 
+export {
+  BindingProvider,
+  bindingHandlers,
+  getBindingHandler,
+  instance as bindingProviderInstance,
+} from './bindingProvider.js';
+export type { BindingHandler } from './bindingProvider.js';
+
 import { Observable } from './observable.js';
 import { Computed } from './computed.js';
 
