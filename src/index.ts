@@ -31,6 +31,20 @@ export { domDataGet, domDataSet, domDataGetOrSet, domDataClear, domDataNextKey }
 
 export { addDisposeCallback, removeDisposeCallback, cleanNode, removeNode } from './domNodeDisposal.js';
 
+export {
+  isStartComment,
+  hasBindingValue,
+  virtualNodeBindingValue,
+  virtualChildNodes,
+  virtualFirstChild,
+  virtualNextSibling,
+  virtualEmptyNode,
+  virtualSetChildren,
+  virtualPrepend,
+  virtualInsertAfter,
+  allowedVirtualElementBindings,
+} from './virtualElements.js';
+
 import { Observable } from './observable.js';
 import { Computed } from './computed.js';
 

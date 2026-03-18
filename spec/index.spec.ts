@@ -38,6 +38,17 @@ import {
   removeDisposeCallback,
   cleanNode,
   removeNode,
+  isStartComment,
+  hasBindingValue,
+  virtualNodeBindingValue,
+  virtualChildNodes,
+  virtualFirstChild,
+  virtualNextSibling,
+  virtualEmptyNode,
+  virtualSetChildren,
+  virtualPrepend,
+  virtualInsertAfter,
+  allowedVirtualElementBindings,
 } from '#src/index.js';
 
 describe('index exports', () => {
@@ -156,5 +167,19 @@ describe('index exports', () => {
     expect(removeDisposeCallback).toBeDefined();
     expect(cleanNode).toBeDefined();
     expect(removeNode).toBeDefined();
+  });
+
+  it('exports virtualElements functions', () => {
+    expect(isStartComment).toBeDefined();
+    expect(hasBindingValue).toBeDefined();
+    expect(virtualNodeBindingValue).toBeDefined();
+    expect(virtualChildNodes).toBeDefined();
+    expect(virtualFirstChild).toBeDefined();
+    expect(virtualNextSibling).toBeDefined();
+    expect(virtualEmptyNode).toBeDefined();
+    expect(virtualSetChildren).toBeDefined();
+    expect(virtualPrepend).toBeDefined();
+    expect(virtualInsertAfter).toBeDefined();
+    expect(allowedVirtualElementBindings).toBeDefined();
   });
 });
