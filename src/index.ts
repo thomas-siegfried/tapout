@@ -27,6 +27,8 @@ export type { ExtenderHandler, RateLimitOptions } from './extenders.js';
 
 export { toJS, toJSON, when } from './utils.js';
 
+export { domDataGet, domDataSet, domDataGetOrSet, domDataClear, domDataNextKey } from './domData.js';
+
 import { Observable } from './observable.js';
 import { Computed } from './computed.js';
 

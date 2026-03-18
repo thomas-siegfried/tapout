@@ -29,6 +29,11 @@ import {
   toJS,
   toJSON,
   when,
+  domDataGet,
+  domDataSet,
+  domDataGetOrSet,
+  domDataClear,
+  domDataNextKey,
 } from '#src/index.js';
 
 describe('index exports', () => {
@@ -132,5 +137,13 @@ describe('index exports', () => {
 
   it('exports when', () => {
     expect(when).toBeDefined();
+  });
+
+  it('exports domData functions', () => {
+    expect(domDataGet).toBeDefined();
+    expect(domDataSet).toBeDefined();
+    expect(domDataGetOrSet).toBeDefined();
+    expect(domDataClear).toBeDefined();
+    expect(domDataNextKey).toBeDefined();
   });
 });
