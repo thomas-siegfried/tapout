@@ -1,5 +1,6 @@
 import type { Subscribable } from './subscribable.js';
 import { valuesArePrimitiveAndEqual } from './subscribable.js';
+import { schedule, cancel } from './tasks.js';
 
 export type ExtenderHandler = (target: Subscribable, value: unknown) => Subscribable | void;
 
@@ -56,9 +57,37 @@ registerExtender('rateLimit', (target, options) => {
     method = opts.method;
   }
 
+  target._deferUpdates = false;
+
   const limitFunction = typeof method === 'function'
     ? method
     : method === 'notifyWhenChangesStop' ? debounce : throttle;
 
   target.limit((callback) => limitFunction(callback, timeout));
+});
+
+registerExtender('deferred', (target, options) => {
+  if (options !== true) {
+    throw new Error("The 'deferred' extender only accepts the value 'true', because it is not supported to turn deferral off once enabled.");
+  }
+
+  if (!target._deferUpdates) {
+    target._deferUpdates = true;
+    target.limit((callback) => {
+      let handle: number;
+      let ignoreUpdates = false;
+      return () => {
+        if (!ignoreUpdates) {
+          cancel(handle);
+          handle = schedule(callback);
+          try {
+            ignoreUpdates = true;
+            target.notifySubscribers(undefined as never, 'dirty');
+          } finally {
+            ignoreUpdates = false;
+          }
+        }
+      };
+    });
+  }
 });

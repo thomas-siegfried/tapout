@@ -161,6 +161,8 @@ export class Subscribable<T = unknown> {
   }
 
   /** @internal */
+  _deferUpdates = false;
+  /** @internal */
   _origNotifySubscribers?: (value: T, event?: string) => void;
   /** @internal */
   _limitChange?: (value: T, isDirty?: boolean) => void;

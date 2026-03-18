@@ -365,6 +365,34 @@ export class Computed<T> extends Subscribable<T> {
   }
 
   private _subscribeToDependency(target: AnySubscribable): DependencyTracking {
+    if (target._deferUpdates) {
+      const dirtySub = target.subscribe(() => {
+        if (this._evalDelayed && !this._isBeingEvaluated) {
+          this._evalDelayed(false);
+        }
+      }, 'dirty');
+      const changeSub = target.subscribe(() => {
+        if (!this._notificationIsPending) {
+          if (this._evalDelayed) {
+            this._evalDelayed(true);
+          } else {
+            this.evaluateImmediate(true);
+          }
+        } else if (this._isDirty) {
+          this._isStale = true;
+        }
+      });
+      return {
+        _target: target,
+        _order: 0,
+        _version: 0,
+        dispose() {
+          dirtySub.dispose();
+          changeSub.dispose();
+        },
+      };
+    }
+
     const subscription = target.subscribe(() => {
       if (this._evalDelayed) {
         this._evalDelayed(true);

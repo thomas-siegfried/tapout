@@ -19,7 +19,7 @@
 - [x] 9. DOM Node Disposal (cleanup callbacks on node removal)
 - [x] 10. Virtual Elements (`<!-- ko -->` comment-based containers)
 - [x] 11. Expression Rewriting / Binding Parser
-- [ ] 12. Microtask Scheduler
+- [x] 12. Microtask Scheduler
 
 ## Phase 3 — Binding System
 

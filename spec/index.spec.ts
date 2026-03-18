@@ -54,6 +54,11 @@ import {
   twoWayBindings,
   writeValueToProperty,
   keyValueArrayContainsKey,
+  schedule,
+  cancel,
+  runEarly,
+  resetForTesting,
+  tasks,
 } from '#src/index.js';
 
 describe('index exports', () => {
@@ -194,5 +199,20 @@ describe('index exports', () => {
     expect(twoWayBindings).toBeDefined();
     expect(writeValueToProperty).toBeDefined();
     expect(keyValueArrayContainsKey).toBeDefined();
+  });
+
+  it('exports tasks functions', () => {
+    expect(schedule).toBeDefined();
+    expect(cancel).toBeDefined();
+    expect(runEarly).toBeDefined();
+    expect(resetForTesting).toBeDefined();
+  });
+
+  it('exports tasks namespace', () => {
+    expect(tasks).toBeDefined();
+    expect(tasks.schedule).toBe(schedule);
+    expect(tasks.cancel).toBe(cancel);
+    expect(tasks.runEarly).toBe(runEarly);
+    expect(tasks.resetForTesting).toBe(resetForTesting);
   });
 });

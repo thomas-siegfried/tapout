@@ -27,6 +27,10 @@ export type { ExtenderHandler, RateLimitOptions } from './extenders.js';
 
 export { toJS, toJSON, when } from './utils.js';
 
+export { schedule, cancel, runEarly, resetForTesting } from './tasks.js';
+import * as tasks from './tasks.js';
+export { tasks };
+
 export { domDataGet, domDataSet, domDataGetOrSet, domDataClear, domDataNextKey } from './domData.js';
 
 export { addDisposeCallback, removeDisposeCallback, cleanNode, removeNode } from './domNodeDisposal.js';
