@@ -45,6 +45,15 @@ export {
   allowedVirtualElementBindings,
 } from './virtualElements.js';
 
+export {
+  parseObjectLiteral,
+  preProcessBindings,
+  twoWayBindings,
+  writeValueToProperty,
+  keyValueArrayContainsKey,
+} from './expressionRewriting.js';
+export type { KeyValuePair, PreProcessOptions, AllBindingsAccessor } from './expressionRewriting.js';
+
 import { Observable } from './observable.js';
 import { Computed } from './computed.js';
 

@@ -18,7 +18,7 @@
 - [x] 8. DOM Data Storage (per-node key/value via WeakMap)
 - [x] 9. DOM Node Disposal (cleanup callbacks on node removal)
 - [x] 10. Virtual Elements (`<!-- ko -->` comment-based containers)
-- [ ] 11. Expression Rewriting / Binding Parser
+- [x] 11. Expression Rewriting / Binding Parser
 - [ ] 12. Microtask Scheduler
 
 ## Phase 3 — Binding System

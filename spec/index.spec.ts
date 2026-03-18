@@ -49,6 +49,11 @@ import {
   virtualPrepend,
   virtualInsertAfter,
   allowedVirtualElementBindings,
+  parseObjectLiteral,
+  preProcessBindings,
+  twoWayBindings,
+  writeValueToProperty,
+  keyValueArrayContainsKey,
 } from '#src/index.js';
 
 describe('index exports', () => {
@@ -181,5 +186,13 @@ describe('index exports', () => {
     expect(virtualPrepend).toBeDefined();
     expect(virtualInsertAfter).toBeDefined();
     expect(allowedVirtualElementBindings).toBeDefined();
+  });
+
+  it('exports expressionRewriting functions', () => {
+    expect(parseObjectLiteral).toBeDefined();
+    expect(preProcessBindings).toBeDefined();
+    expect(twoWayBindings).toBeDefined();
+    expect(writeValueToProperty).toBeDefined();
+    expect(keyValueArrayContainsKey).toBeDefined();
   });
 });
