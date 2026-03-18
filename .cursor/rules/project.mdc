@@ -1,0 +1,42 @@
+---
+description: Core project context and conventions for Tapout
+alwaysApply: true
+---
+
+# Tapout
+
+A modern ESM reactivity and templating library, spiritually inspired by KnockoutJS. Not a drop-in replacement — same concepts, modern implementation.
+
+## Stack
+
+- TypeScript (strict), ESM module type
+- Node16 module/moduleResolution
+- Source in `src/`, compiled output in `dist/`
+- `#src/*` subpath imports available for test files
+
+## Testing
+
+- **Unit tests**: Jasmine, written in TypeScript, in `spec/`
+- **E2E tests**: Playwright, Chrome only (other browsers later)
+- Every feature gets tests before or alongside implementation
+
+## Reference Sources
+
+- `ref/` contains original source files to consider when re-creating features
+- **Never modify files in `ref/`** — they are read-only reference material
+- When implementing a feature, consult only the `ref/` sources and official documentation
+- Do not reference or pull from source implementations outside of `ref/`
+
+## Development Approach
+
+- Build one feature at a time, incrementally
+- Each feature should be self-contained with its own tests
+- No legacy KnockoutJS compatibility — use modern patterns (classes, proxies, signals, etc.)
+- Keep the library small and compact; avoid bloat
+
+## Long-Term Vision
+
+- Core: observable reactivity system (observables, computed, subscriptions)
+- Templating: declarative DOM bindings
+- Incorporate ideas from the broader Knockout ecosystem over time
+- Goal is a lightweight, modern library that preserves Knockout's philosophy: simple, explicit, dependency-tracked reactivity with declarative bindings
