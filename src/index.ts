@@ -22,6 +22,9 @@ export type { ArrayChange, CompareArraysOptions } from './compareArrays.js';
 export { Computed, PureComputed, isComputed, isPureComputed } from './computed.js';
 export type { ComputedOptions } from './computed.js';
 
+export { registerExtender, throttle, debounce } from './extenders.js';
+export type { ExtenderHandler, RateLimitOptions } from './extenders.js';
+
 import { Observable } from './observable.js';
 import { Computed } from './computed.js';
 

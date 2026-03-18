@@ -23,6 +23,9 @@ import {
   PureComputed,
   isComputed,
   isPureComputed,
+  registerExtender,
+  throttle,
+  debounce,
 } from '#src/index.js';
 
 describe('index exports', () => {
@@ -102,5 +105,17 @@ describe('index exports', () => {
 
   it('exports isPureComputed', () => {
     expect(isPureComputed).toBeDefined();
+  });
+
+  it('exports registerExtender', () => {
+    expect(registerExtender).toBeDefined();
+  });
+
+  it('exports throttle', () => {
+    expect(throttle).toBeDefined();
+  });
+
+  it('exports debounce', () => {
+    expect(debounce).toBeDefined();
   });
 });

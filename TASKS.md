@@ -8,9 +8,9 @@
 - [x] 4a. Computed — basic (derived observable with dependency tracking)
 - [x] 4b. Computed — writable (supports a write function)
 - [x] 4c. Pure Computed (sleep/wake optimization)
-- [ ] 4d. Computed — deferred evaluation (lazy first eval)
+- [x] 4d. Computed — deferred evaluation (lazy first eval)
 - [x] 5. Observable Array (array mutations with change tracking)
-- [ ] 6. Extenders (`notify`, `rateLimit`, `deferred`)
+- [x] 6. Extenders (`notify`, `rateLimit`; `deferred` deferred to Phase 2 with microtask scheduler)
 - [ ] 7. Utilities — `toJS`, `toJSON`, `when`
 
 ## Phase 2 — Infrastructure for Bindings

@@ -1,4 +1,5 @@
 import { begin, end } from './dependencyDetection.js';
+import { getExtenderHandler } from './extenders.js';
 
 export type SubscriptionCallback<T> = (value: T) => void;
 
@@ -146,6 +147,84 @@ export class Subscribable<T = unknown> {
       return !this.equalityComparer(oldValue, newValue);
     }
     return true;
+  }
+
+  extend(requestedExtenders: Record<string, unknown>): this {
+    for (const [key, value] of Object.entries(requestedExtenders)) {
+      const handler = getExtenderHandler(key);
+      if (typeof handler === 'function') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        handler(this as Subscribable<any>, value);
+      }
+    }
+    return this;
+  }
+
+  /** @internal */
+  _origNotifySubscribers?: (value: T, event?: string) => void;
+  /** @internal */
+  _limitChange?: (value: T, isDirty?: boolean) => void;
+  /** @internal */
+  _limitBeforeChange?: (value: T) => void;
+  /** @internal */
+  _notificationIsPending?: boolean;
+  /** @internal */
+  _changeSubscriptions?: Subscription<T>[];
+  /** @internal */
+  _evalIfChanged?(): T;
+
+  limit(limitFunction: (callback: () => void) => () => void): void {
+    const self = this;
+    let ignoreBeforeChange = false;
+    let previousValue: T;
+    let pendingValue: T;
+    let didUpdate = false;
+
+    if (!self._origNotifySubscribers) {
+      self._origNotifySubscribers = self.notifySubscribers.bind(self);
+      self.notifySubscribers = function limitNotifySubscribers(value: T, event?: string): void {
+        if (!event || event === DEFAULT_EVENT) {
+          self._limitChange!(value);
+        } else if (event === 'beforeChange') {
+          self._limitBeforeChange!(value);
+        } else {
+          self._origNotifySubscribers!(value, event);
+        }
+      };
+    }
+
+    const finish = limitFunction(function () {
+      self._notificationIsPending = false;
+
+      if (pendingValue === (self as unknown) && self._evalIfChanged) {
+        pendingValue = self._evalIfChanged();
+      }
+      const shouldNotify = didUpdate && self.isDifferent(previousValue, pendingValue);
+
+      didUpdate = ignoreBeforeChange = false;
+
+      if (shouldNotify) {
+        previousValue = pendingValue;
+        self._origNotifySubscribers!(pendingValue);
+      }
+    });
+
+    self._limitChange = function (value: T, isDirty?: boolean) {
+      if (!isDirty || !self._notificationIsPending) {
+        didUpdate = !isDirty;
+      }
+      self._changeSubscriptions = self._subscriptions[DEFAULT_EVENT].slice(0);
+      self._notificationIsPending = ignoreBeforeChange = true;
+      pendingValue = value;
+      finish();
+    };
+
+    self._limitBeforeChange = function (value: T) {
+      if (!ignoreBeforeChange) {
+        previousValue = value;
+        self._origNotifySubscribers!(value, 'beforeChange');
+      }
+    };
   }
 }
 

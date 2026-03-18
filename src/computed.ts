@@ -15,6 +15,7 @@ export interface ComputedOptions<T> {
   read: () => T;
   write?: (value: T) => void;
   pure?: boolean;
+  deferEvaluation?: boolean;
 }
 
 export class Computed<T> extends Subscribable<T> {
@@ -28,22 +29,25 @@ export class Computed<T> extends Subscribable<T> {
   private _isSleeping: boolean;
   private _dependencyTracking: Record<number, DependencyTracking | null> = {};
   private _dependenciesCount = 0;
+  private _deferEvaluation: boolean;
 
   constructor(evaluatorOrOptions: (() => T) | ComputedOptions<T>) {
     super();
     if (typeof evaluatorOrOptions === 'function') {
       this._readFunction = evaluatorOrOptions;
       this._pure = false;
+      this._deferEvaluation = false;
     } else {
       this._readFunction = evaluatorOrOptions.read;
       this._writeFunction = evaluatorOrOptions.write;
       this._pure = evaluatorOrOptions.pure ?? false;
+      this._deferEvaluation = evaluatorOrOptions.deferEvaluation ?? false;
     }
 
     this._isSleeping = this._pure;
     this.equalityComparer = valuesArePrimitiveAndEqual;
 
-    if (!this._isSleeping) {
+    if (!this._isSleeping && !this._deferEvaluation) {
       this.evaluateImmediate();
     }
   }
@@ -129,6 +133,37 @@ export class Computed<T> extends Subscribable<T> {
     return this._isDirty || this._dependenciesCount > 0;
   }
 
+  /** @internal */
+  private _isStale = false;
+  /** @internal */
+  _evalDelayed?: (isChange: boolean) => void;
+
+  override limit(limitFunction: (callback: () => void) => () => void): void {
+    super.limit(limitFunction);
+
+    this._evalIfChanged = () => {
+      if (!this._isSleeping) {
+        if (this._isStale) {
+          this.evaluateImmediate();
+        } else {
+          this._isDirty = false;
+        }
+      }
+      return this._latestValue as T;
+    };
+
+    this._evalDelayed = (isChange: boolean) => {
+      this._limitBeforeChange!(this._latestValue as T);
+
+      this._isDirty = true;
+      if (isChange) {
+        this._isStale = true;
+      }
+
+      this._limitChange!(this as unknown as T, !isChange);
+    };
+  }
+
   haveDependenciesChanged(): boolean {
     if (this._isBeingEvaluated) {
       return false;
@@ -148,6 +183,11 @@ export class Computed<T> extends Subscribable<T> {
   }
 
   protected override beforeSubscriptionAdd(event: string): void {
+    if (this._deferEvaluation && (event === 'change' || event === 'beforeChange')) {
+      this._deferEvaluation = false;
+      this.peek();
+    }
+
     if (!this._pure || this._isDisposed || !this._isSleeping || event !== 'change') {
       return;
     }
@@ -326,7 +366,11 @@ export class Computed<T> extends Subscribable<T> {
 
   private _subscribeToDependency(target: AnySubscribable): DependencyTracking {
     const subscription = target.subscribe(() => {
-      this.evaluateImmediate(true);
+      if (this._evalDelayed) {
+        this._evalDelayed(true);
+      } else {
+        this.evaluateImmediate(true);
+      }
     });
     return {
       _target: target,
