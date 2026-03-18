@@ -11,13 +11,8 @@ import {
   virtualNextSibling,
   allowedVirtualElementBindings,
 } from './virtualElements.js';
-
-// ---- Types ----
-
-interface BindingInfo {
-  alreadyBound?: boolean;
-  context?: BindingContext;
-}
+import { bindingEvent, subscribeToBindingEvent } from './bindingEvent.js';
+import type { BindingInfo } from './bindingEvent.js';
 
 interface SortedBinding {
   key: string;
@@ -153,10 +148,12 @@ function applyBindingsToNodeInternal(
     }
   }
 
-  const contextToExtend = bindingContext;
+  let contextToExtend = bindingContext;
   let bindingHandlerThatControlsDescendants: string | undefined;
 
   if (bindings) {
+    contextToExtend = subscribeToBindingEvent(node, bindings, bindingContext, evaluateValueAccessor);
+
     const getValueAccessor: (key: string) => () => unknown = bindingsUpdater
       ? (bindingKey) => () => {
           const current = bindingsUpdater!.get() as Record<string, unknown> | null;
@@ -242,27 +239,30 @@ function applyBindingsToDescendantsInternal(
   elementOrVirtualElement: Node,
 ): void {
   let nextInQueue = virtualFirstChild(elementOrVirtualElement);
-  if (!nextInQueue) return;
 
-  const provider = providerInstance;
-  const preprocessNode = (provider as { preprocessNode?(node: Node): void }).preprocessNode;
+  if (nextInQueue) {
+    const provider = providerInstance;
+    const preprocessNode = (provider as { preprocessNode?(node: Node): void }).preprocessNode;
 
-  if (preprocessNode) {
+    if (preprocessNode) {
+      let currentChild: Node | null = nextInQueue;
+      while (currentChild) {
+        const next = virtualNextSibling(currentChild);
+        preprocessNode.call(provider, currentChild);
+        currentChild = next;
+      }
+      nextInQueue = virtualFirstChild(elementOrVirtualElement);
+    }
+
     let currentChild: Node | null = nextInQueue;
     while (currentChild) {
       const next = virtualNextSibling(currentChild);
-      preprocessNode.call(provider, currentChild);
+      applyBindingsToNodeAndDescendantsInternal(bindingContext, currentChild);
       currentChild = next;
     }
-    nextInQueue = virtualFirstChild(elementOrVirtualElement);
   }
 
-  let currentChild: Node | null = nextInQueue;
-  while (currentChild) {
-    const next = virtualNextSibling(currentChild);
-    applyBindingsToNodeAndDescendantsInternal(bindingContext, currentChild);
-    currentChild = next;
-  }
+  bindingEvent.notify(elementOrVirtualElement, bindingEvent.childrenComplete);
 }
 
 function applyBindingsToNodeAndDescendantsInternal(

@@ -26,7 +26,7 @@
 - [x] 13. Binding Context (`$data`, `$parent`, `$root`, etc.)
 - [x] 14. Binding Provider (reads `data-bind` attributes)
 - [x] 15. `applyBindings` Core (DOM tree walk, init/update lifecycle)
-- [ ] 16. Binding Events (`childrenComplete`, `descendantsComplete`)
+- [x] 16. Binding Events (`childrenComplete`, `descendantsComplete`)
 
 ## Phase 4 — Built-in Bindings (Simple)
 

@@ -84,6 +84,9 @@ export {
   applyBindingsToNode,
 } from './applyBindings.js';
 
+export { bindingEvent } from './bindingEvent.js';
+export type { BindingInfo } from './bindingEvent.js';
+
 import { Observable } from './observable.js';
 import { Computed } from './computed.js';
 
