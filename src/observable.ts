@@ -1,7 +1,8 @@
 import { Subscribable, valuesArePrimitiveAndEqual } from './subscribable.js';
+import type { ReadableSubscribable } from './subscribable.js';
 import { registerDependency } from './dependencyDetection.js';
 
-export class Observable<T> extends Subscribable<T> {
+export class Observable<T> extends Subscribable<T> implements ReadableSubscribable<T> {
   private _latestValue: T;
 
   constructor(initialValue: T) {

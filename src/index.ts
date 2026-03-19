@@ -1,5 +1,5 @@
-export { Subscribable, Subscription, isSubscribable, valuesArePrimitiveAndEqual } from './subscribable.js';
-export type { SubscriptionCallback } from './subscribable.js';
+export { Subscribable, Subscription, isSubscribable, isReadableSubscribable, valuesArePrimitiveAndEqual } from './subscribable.js';
+export type { SubscriptionCallback, ReadableSubscribable } from './subscribable.js';
 
 export {
   begin,
@@ -25,7 +25,7 @@ export type { ComputedOptions } from './computed.js';
 export { registerExtender, throttle, debounce } from './extenders.js';
 export type { ExtenderHandler, RateLimitOptions } from './extenders.js';
 
-export { toJS, toJSON, when } from './utils.js';
+export { unwrapObservable, toJS, toJSON, when } from './utils.js';
 
 export { schedule, cancel, runEarly, resetForTesting } from './tasks.js';
 import * as tasks from './tasks.js';
@@ -86,6 +86,8 @@ export {
 
 export { bindingEvent } from './bindingEvent.js';
 export type { BindingInfo } from './bindingEvent.js';
+
+import './bindings.js';
 
 import { Observable } from './observable.js';
 import { Computed } from './computed.js';

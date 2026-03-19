@@ -1,12 +1,19 @@
-import { Observable } from './observable.js';
-import { Computed, PureComputed } from './computed.js';
-import type { Subscription } from './subscribable.js';
+import { PureComputed } from './computed.js';
+import { isReadableSubscribable } from './subscribable.js';
+import type { ReadableSubscribable, Subscription } from './subscribable.js';
 
 const MAX_NESTED_OBSERVABLE_DEPTH = 10;
 
-function unwrapObservable(value: unknown): unknown {
-  for (let i = 0; (value instanceof Observable || value instanceof Computed) && i < MAX_NESTED_OBSERVABLE_DEPTH; i++) {
-    value = (value as Observable<unknown> | Computed<unknown>).peek();
+export function unwrapObservable(value: unknown): unknown {
+  for (let i = 0; isReadableSubscribable(value) && i < MAX_NESTED_OBSERVABLE_DEPTH; i++) {
+    value = value.get();
+  }
+  return value;
+}
+
+function peekObservable(value: unknown): unknown {
+  for (let i = 0; isReadableSubscribable(value) && i < MAX_NESTED_OBSERVABLE_DEPTH; i++) {
+    value = value.peek();
   }
   return value;
 }
@@ -27,7 +34,7 @@ function mapJsObjectGraph(
   rootObject: unknown,
   visited: Map<object, unknown>,
 ): unknown {
-  rootObject = unwrapObservable(rootObject);
+  rootObject = peekObservable(rootObject);
 
   if (!canHaveProperties(rootObject)) {
     return rootObject;
@@ -46,7 +53,7 @@ function mapJsObjectGraph(
     const arr = rootObject as unknown as unknown[];
     const out = output as unknown[];
     for (let i = 0; i < arr.length; i++) {
-      const propertyValue = unwrapObservable(arr[i]);
+      const propertyValue = peekObservable(arr[i]);
       out[i] = canHaveProperties(propertyValue)
         ? (visited.get(propertyValue as object) ?? mapJsObjectGraph(propertyValue, visited))
         : propertyValue;
@@ -54,7 +61,7 @@ function mapJsObjectGraph(
   } else {
     const out = output as Record<string, unknown>;
     for (const key in rootObject) {
-      const propertyValue = unwrapObservable(rootObject[key]);
+      const propertyValue = peekObservable(rootObject[key]);
       out[key] = canHaveProperties(propertyValue)
         ? (visited.get(propertyValue as object) ?? mapJsObjectGraph(propertyValue, visited))
         : propertyValue;

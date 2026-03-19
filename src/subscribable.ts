@@ -237,3 +237,16 @@ export function isSubscribable(value: unknown): value is Subscribable {
     typeof (value as Subscribable).notifySubscribers === 'function'
   );
 }
+
+export interface ReadableSubscribable<T = unknown> extends Subscribable<T> {
+  get(): T;
+  peek(): T;
+}
+
+export function isReadableSubscribable(value: unknown): value is ReadableSubscribable {
+  return (
+    isSubscribable(value) &&
+    typeof (value as ReadableSubscribable).get === 'function' &&
+    typeof (value as ReadableSubscribable).peek === 'function'
+  );
+}

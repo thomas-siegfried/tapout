@@ -1,4 +1,5 @@
 import { Subscribable, valuesArePrimitiveAndEqual } from './subscribable.js';
+import type { ReadableSubscribable } from './subscribable.js';
 import { begin, end, registerDependency } from './dependencyDetection.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -18,7 +19,7 @@ export interface ComputedOptions<T> {
   deferEvaluation?: boolean;
 }
 
-export class Computed<T> extends Subscribable<T> {
+export class Computed<T> extends Subscribable<T> implements ReadableSubscribable<T> {
   private _latestValue: T | undefined = undefined;
   private _readFunction: (() => T) | undefined;
   private _writeFunction: ((value: T) => void) | undefined;

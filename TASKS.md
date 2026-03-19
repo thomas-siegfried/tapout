@@ -30,9 +30,9 @@
 
 ## Phase 4 — Built-in Bindings (Simple)
 
-- [ ] 17. One-way display: `text`, `html`, `visible`, `hidden`
-- [ ] 18. Attribute bindings: `attr`, `css`, `class`, `style`
-- [ ] 19. Form state: `enable`, `disable`, `uniqueName`
+- [x] 17. One-way display: `text`, `html`, `visible`, `hidden`
+- [x] 18. Attribute bindings: `attr`, `css`, `class`, `style`
+- [x] 19. Form state: `enable`, `disable`, `uniqueName`
 
 ## Phase 5 — Built-in Bindings (Complex / Two-Way)
 

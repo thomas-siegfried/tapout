@@ -1,17 +1,11 @@
-import { Observable } from './observable.js';
-import { Computed, PureComputed } from './computed.js';
+import { PureComputed } from './computed.js';
+import type { Computed } from './computed.js';
+import { isReadableSubscribable } from './subscribable.js';
 import { domDataGet } from './domData.js';
 import { getDependencies } from './dependencyDetection.js';
 
-/** Unwrap using get() so the read registers as a dependency in the current tracking frame. */
 function unwrapObservable(value: unknown): unknown {
-  if (value instanceof Observable) return value.get();
-  if (value instanceof Computed) return value.get();
-  return value;
-}
-
-function isObservableOrComputed(value: unknown): value is Observable<unknown> | Computed<unknown> {
-  return value instanceof Observable || value instanceof Computed;
+  return isReadableSubscribable(value) ? value.get() : value;
 }
 
 const SUBSCRIBABLE = Symbol('subscribable');
@@ -65,7 +59,7 @@ export class BindingContext {
     const self = this;
     const shouldInheritData = dataItemOrAccessor === INHERIT;
     const realDataItemOrAccessor = shouldInheritData ? undefined : dataItemOrAccessor;
-    const isFunc = typeof realDataItemOrAccessor === 'function' && !isObservableOrComputed(realDataItemOrAccessor);
+    const isFunc = typeof realDataItemOrAccessor === 'function' && !isReadableSubscribable(realDataItemOrAccessor);
     const dataDependency = options?.dataDependency;
 
     function updateContext() {
@@ -152,7 +146,7 @@ export class BindingContext {
     const childOptions = options as CreateChildContextOptions | undefined;
 
     if (dataItemAlias && childOptions?.noChildContext) {
-      const isFunc = typeof dataItemOrAccessor === 'function' && !isObservableOrComputed(dataItemOrAccessor);
+      const isFunc = typeof dataItemOrAccessor === 'function' && !isReadableSubscribable(dataItemOrAccessor);
       return new BindingContext(INHERIT, this, null, (self) => {
         if (extendCallback) {
           extendCallback(self);
