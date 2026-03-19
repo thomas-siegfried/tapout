@@ -68,6 +68,27 @@ function createBindingsStringEvaluatorViaCache(
   return cache[cacheKey] || (cache[cacheKey] = createBindingsStringEvaluator(bindingsString, options));
 }
 
+// ---- Custom Element Hook (set by componentBinding.ts to avoid circular imports) ----
+
+export type GetComponentNameForNodeFn = (node: Node) => string | undefined;
+export type AddBindingsForCustomElementFn = (
+  allBindings: Record<string, unknown> | null,
+  node: Node,
+  bindingContext: BindingContext,
+  valueAccessors?: boolean,
+) => Record<string, unknown> | null;
+
+let _getComponentNameForNode: GetComponentNameForNodeFn | undefined;
+let _addBindingsForCustomElement: AddBindingsForCustomElementFn | undefined;
+
+export function setCustomElementHooks(
+  getComponentNameForNode: GetComponentNameForNodeFn,
+  addBindingsForCustomElement: AddBindingsForCustomElementFn,
+): void {
+  _getComponentNameForNode = getComponentNameForNode;
+  _addBindingsForCustomElement = addBindingsForCustomElement;
+}
+
 // ---- Binding Provider ----
 
 export class BindingProvider {
@@ -76,7 +97,8 @@ export class BindingProvider {
   nodeHasBindings(node: Node): boolean {
     switch (node.nodeType) {
       case 1: // Element
-        return (node as Element).getAttribute(DATA_BIND_ATTR) != null;
+        return (node as Element).getAttribute(DATA_BIND_ATTR) != null
+          || !!(_getComponentNameForNode && _getComponentNameForNode(node));
       case 8: // Comment
         return hasBindingValue(node);
       default:
@@ -100,8 +122,15 @@ export class BindingProvider {
     bindingContext: BindingContext,
   ): Record<string, () => unknown> | null {
     const bindingsString = this.getBindingsString(node);
-    if (!bindingsString) return null;
-    return this.parseBindingsString(bindingsString, bindingContext, node, { valueAccessors: true }) as Record<string, () => unknown> | null;
+    let result = bindingsString
+      ? this.parseBindingsString(bindingsString, bindingContext, node, { valueAccessors: true }) as Record<string, () => unknown> | null
+      : null;
+
+    if (_addBindingsForCustomElement) {
+      result = _addBindingsForCustomElement(result, node, bindingContext, true) as typeof result;
+    }
+
+    return result;
   }
 
   getBindings(
@@ -109,8 +138,15 @@ export class BindingProvider {
     bindingContext: BindingContext,
   ): Record<string, unknown> | null {
     const bindingsString = this.getBindingsString(node);
-    if (!bindingsString) return null;
-    return this.parseBindingsString(bindingsString, bindingContext, node);
+    let result = bindingsString
+      ? this.parseBindingsString(bindingsString, bindingContext, node)
+      : null;
+
+    if (_addBindingsForCustomElement) {
+      result = _addBindingsForCustomElement(result, node, bindingContext, false) as typeof result;
+    }
+
+    return result;
   }
 
   parseBindingsString(

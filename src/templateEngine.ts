@@ -32,6 +32,10 @@ export abstract class TemplateEngine {
     templateDocument?: Document,
   ): Node[];
 
+  createJavaScriptEvaluatorBlock(_script: string): string {
+    throw new Error('Override createJavaScriptEvaluatorBlock');
+  }
+
   makeTemplateSource(template: string | Node, templateDocument?: Document): TemplateSource {
     if (typeof template === 'string') {
       const doc = templateDocument || document;
@@ -53,6 +57,22 @@ export abstract class TemplateEngine {
   ): Node[] {
     const source = this.makeTemplateSource(template, templateDocument);
     return this.renderTemplateSource(source, bindingContext, options, templateDocument);
+  }
+
+  isTemplateRewritten(template: string | Node, templateDocument?: Document): boolean {
+    if (this.allowTemplateRewriting === false) return true;
+    return !!this.makeTemplateSource(template, templateDocument).data('isRewritten');
+  }
+
+  rewriteTemplate(
+    template: string | Node,
+    rewriterCallback: (text: string) => string,
+    templateDocument?: Document,
+  ): void {
+    const templateSource = this.makeTemplateSource(template, templateDocument);
+    const rewritten = rewriterCallback(templateSource.text());
+    templateSource.text(rewritten);
+    templateSource.data('isRewritten', true);
   }
 }
 

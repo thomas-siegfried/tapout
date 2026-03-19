@@ -16,6 +16,8 @@ import { getTemplateEngine } from './templateEngine.js';
 import type { TemplateEngine, TemplateRenderOptions } from './templateEngine.js';
 import { setDomNodeChildrenFromArrayMapping } from './arrayToDomMapping.js';
 import type { ArrayChange } from './compareArrays.js';
+import { unmemoizeDomNodeAndDescendants } from './memoization.js';
+import { ensureTemplateIsRewritten } from './templateRewriting.js';
 import {
   unwrapObservable,
   fixUpContinuousNodeArray,
@@ -71,9 +73,15 @@ function activateBindingsOnContinuousNodeArray(
       }
     }
 
+    // Apply bindings before unmemoization — unmemoization may introduce new nodes
+    // that shouldn't be re-bound, whereas regular applyBindings won't add memoized nodes
     invokeForEachNodeInContinuousRange(firstNode, lastNode, (node) => {
       if (node.nodeType === 1 || node.nodeType === 8)
         applyBindings(bindingContext, node);
+    });
+    invokeForEachNodeInContinuousRange(firstNode, lastNode, (node) => {
+      if (node.nodeType === 1 || node.nodeType === 8)
+        unmemoizeDomNodeAndDescendants(node, [bindingContext]);
     });
 
     fixUpContinuousNodeArray(continuousNodeArray, parentNode);
@@ -99,6 +107,7 @@ function executeTemplate(
   const firstTargetNode = targetNodeOrNodeArray && getFirstNodeFromPossibleArray(targetNodeOrNodeArray);
   const templateDocument = ((firstTargetNode || template) as Node)?.ownerDocument;
   const templateEngineToUse: TemplateEngine = options.templateEngine || getTemplateEngine();
+  ensureTemplateIsRewritten(template, templateEngineToUse, templateDocument ?? undefined);
   const renderedNodesArray = templateEngineToUse.renderTemplate(template, bindingContext, options, templateDocument ?? undefined);
 
   if (typeof renderedNodesArray.length !== 'number' || (renderedNodesArray.length > 0 && typeof renderedNodesArray[0].nodeType !== 'number'))

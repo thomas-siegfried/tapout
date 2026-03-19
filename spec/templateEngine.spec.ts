@@ -84,8 +84,8 @@ describe('AnonymousSource', () => {
     const div = createElement('div');
     const source = new AnonymousSource(div);
     const container = createElement('div', {}, createElement('span'));
-    source.nodes(container as HTMLElement);
-    expect(source.nodes()).toBe(container);
+    source.nodes(container as unknown as HTMLElement);
+    expect(source.nodes()).toBe(container as unknown as HTMLElement);
   });
 
   it('stores and retrieves text via domData', () => {

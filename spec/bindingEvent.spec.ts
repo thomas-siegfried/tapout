@@ -335,8 +335,8 @@ describe('bindingEvent', () => {
 
       // Start async context on inner (simulating a binding that controls descendants and loads async)
       const innerInfo = domDataGet(inner, BINDING_INFO_KEY) as BindingInfo | undefined;
-      const innerCtx = outerExtCtx.extend((ctx) => {
-        // Propagate ancestor binding info
+      const innerCtx = outerExtCtx.extend((_ctx) => {
+        return {};
       });
       const innerExtCtx = bindingEvent.startPossiblyAsyncContentBinding(inner, innerCtx);
 

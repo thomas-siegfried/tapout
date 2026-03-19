@@ -92,6 +92,7 @@ export {
   applyBindings,
   applyBindingsToDescendants,
   applyBindingsToNode,
+  applyBindingAccessorsToNode,
 } from './applyBindings.js';
 
 export { bindingEvent } from './bindingEvent.js';
@@ -116,9 +117,26 @@ export type { ArrayMappingOptions } from './arrayToDomMapping.js';
 
 export { renderTemplate, renderTemplateForEach } from './templateRendering.js';
 
+import * as memoization from './memoization.js';
+export { memoization };
+
+export {
+  ensureTemplateIsRewritten,
+  memoizeBindingAttributeSyntax,
+  applyMemoizedBindingsToNextSibling,
+  bindingRewriteValidators,
+} from './templateRewriting.js';
+
+import * as components from './components.js';
+export { components };
+export type { ComponentDefinition, ComponentConfig, ComponentLoader, ComponentInfo } from './components.js';
+
+export { getComponentNameForNode, addBindingsForCustomElement } from './componentBinding.js';
+
 import './bindings.js';
 import './templateRendering.js';
 import './controlFlowBindings.js';
+import './componentBinding.js';
 
 import { Observable } from './observable.js';
 import { Computed } from './computed.js';

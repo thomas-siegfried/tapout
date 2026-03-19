@@ -53,12 +53,12 @@
 
 ## Phase 7 — Components
 
-- [ ] 31. Component Registration & Loader Pipeline
-- [ ] 32. `component` Binding Handler
-- [ ] 33. Custom Elements (`<my-component>`)
+- [x] 31. Component Registration & Loader Pipeline
+- [x] 32. `component` Binding Handler
+- [x] 33. Custom Elements (`<my-component>`)
 
 ## Phase 8 — Polish & Advanced
 
-- [ ] 34. Select Extensions (arbitrary JS objects as option values)
-- [ ] 35. Memoization (deferred binding via comment markers)
-- [ ] 36. Template Rewriting
+- [x] 34. Select Extensions (arbitrary JS objects as option values)
+- [x] 35. Memoization (deferred binding via comment markers)
+- [x] 36. Template Rewriting

@@ -356,3 +356,12 @@ export function applyBindingsToNode(
   const accessors = makeBindingAccessors(bindings, context, node);
   return applyBindingsToNodeInternal(node, accessors, context);
 }
+
+export function applyBindingAccessorsToNode(
+  node: Node,
+  bindings: Record<string, () => unknown> | ((ctx: BindingContext, node: Node) => Record<string, () => unknown>),
+  viewModelOrBindingContext?: unknown,
+): { shouldBindDescendants: boolean } {
+  const context = getBindingContext(viewModelOrBindingContext);
+  return applyBindingsToNodeInternal(node, bindings, context);
+}
