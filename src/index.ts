@@ -9,6 +9,7 @@ export {
   getDependenciesCount,
   getDependencies,
   isInitial,
+  getCurrentComputed,
 } from './dependencyDetection.js';
 export type { TrackingFrame } from './dependencyDetection.js';
 
@@ -25,7 +26,16 @@ export type { ComputedOptions } from './computed.js';
 export { registerExtender, throttle, debounce } from './extenders.js';
 export type { ExtenderHandler, RateLimitOptions } from './extenders.js';
 
-export { unwrapObservable, toJS, toJSON, when } from './utils.js';
+export {
+  unwrapObservable, toJS, toJSON, when,
+  cloneNodes,
+  fixUpContinuousNodeArray,
+  replaceDomNodes,
+  moveCleanedNodesToContainerElement,
+  parseHtmlFragment,
+  domNodeIsAttachedToDocument,
+  anyDomNodeIsAttachedToDocument,
+} from './utils.js';
 
 export { schedule, cancel, runEarly, resetForTesting } from './tasks.js';
 import * as tasks from './tasks.js';
@@ -90,7 +100,25 @@ export type { BindingInfo } from './bindingEvent.js';
 import * as selectExtensions from './selectExtensions.js';
 export { selectExtensions };
 
+export { DomElementSource, AnonymousSource } from './templateSources.js';
+
+export {
+  TemplateEngine,
+  NativeTemplateEngine,
+  nativeTemplateEngine,
+  setTemplateEngine,
+  getTemplateEngine,
+} from './templateEngine.js';
+export type { TemplateRenderOptions, TemplateSource } from './templateEngine.js';
+
+export { setDomNodeChildrenFromArrayMapping } from './arrayToDomMapping.js';
+export type { ArrayMappingOptions } from './arrayToDomMapping.js';
+
+export { renderTemplate, renderTemplateForEach } from './templateRendering.js';
+
 import './bindings.js';
+import './templateRendering.js';
+import './controlFlowBindings.js';
 
 import { Observable } from './observable.js';
 import { Computed } from './computed.js';

@@ -46,10 +46,10 @@
 
 ## Phase 6 — Control Flow & Templates
 
-- [ ] 27. Template Sources & Template Engine
-- [ ] 28. `if` / `ifnot` bindings
-- [ ] 29. `with` / `using` / `let` bindings
-- [ ] 30. `foreach` binding (array diff algorithm + DOM sync)
+- [x] 27. Template Sources & Template Engine
+- [x] 28. `if` / `ifnot` bindings
+- [x] 29. `with` / `using` / `let` bindings
+- [x] 30. `foreach` binding (array diff algorithm + DOM sync)
 
 ## Phase 7 — Components
 

@@ -166,12 +166,12 @@ describe('expressionRewriting', () => {
     });
 
     it('uses aliased key for two-way writers when value is a string', () => {
-      twoWayBindings['hasFocus'] = 'hasfocus';
+      twoWayBindings['testAlias'] = 'testCanonical';
       try {
-        const result = preProcessBindings('hasFocus: isFocused');
-        expect(result).toContain("'hasfocus':function(_z){isFocused=_z}");
+        const result = preProcessBindings('testAlias: isFocused');
+        expect(result).toContain("'testCanonical':function(_z){isFocused=_z}");
       } finally {
-        delete twoWayBindings['hasFocus'];
+        delete twoWayBindings['testAlias'];
       }
     });
 
@@ -328,9 +328,9 @@ describe('expressionRewriting', () => {
     });
 
     it('supports string aliases', () => {
-      twoWayBindings['hasFocus'] = 'hasfocus';
-      expect(twoWayBindings['hasFocus']).toBe('hasfocus');
-      delete twoWayBindings['hasFocus'];
+      twoWayBindings['testAlias'] = 'testCanonical';
+      expect(twoWayBindings['testAlias']).toBe('testCanonical');
+      delete twoWayBindings['testAlias'];
     });
   });
 });

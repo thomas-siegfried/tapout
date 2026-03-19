@@ -70,3 +70,7 @@ export function isInitial(): boolean | undefined {
   }
   return undefined;
 }
+
+export function getCurrentComputed(): TrackingFrame['computed'] | undefined {
+  return currentFrame?.computed;
+}
