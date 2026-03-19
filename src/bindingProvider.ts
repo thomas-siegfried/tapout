@@ -1,5 +1,6 @@
 import type { BindingContext } from './bindingContext.js';
 import type { AllBindingsAccessor } from './expressionRewriting.js';
+export type { AllBindingsAccessor } from './expressionRewriting.js';
 import { preProcessBindings } from './expressionRewriting.js';
 import { hasBindingValue, virtualNodeBindingValue } from './virtualElements.js';
 

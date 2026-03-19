@@ -1,10 +1,23 @@
 import { unwrapObservable } from './utils.js';
 import { bindingHandlers } from './bindingProvider.js';
-import type { BindingHandler } from './bindingProvider.js';
+import type { BindingHandler, AllBindingsAccessor } from './bindingProvider.js';
 import { allowedVirtualElementBindings, virtualFirstChild, virtualNextSibling, virtualSetChildren } from './virtualElements.js';
-import { removeNode } from './domNodeDisposal.js';
+import { addDisposeCallback, removeNode } from './domNodeDisposal.js';
+import { twoWayBindings, writeValueToProperty } from './expressionRewriting.js';
+import { Computed, PureComputed } from './computed.js';
+import { Observable } from './observable.js';
+import { isObservableArray } from './observableArray.js';
+import { ignore, isInitial, getDependenciesCount } from './dependencyDetection.js';
+import { bindingEvent } from './bindingEvent.js';
+import * as selectExtensions from './selectExtensions.js';
 
 // ---- Shared DOM Utilities ----
+
+function triggerEvent(element: Node, eventType: string): void {
+  const EventCtor = ((element.ownerDocument?.defaultView) as unknown as typeof globalThis)?.Event ?? Event;
+  element.dispatchEvent(new EventCtor(eventType, { bubbles: true, cancelable: true }));
+}
+
 
 function setTextContent(element: Node, textContent: unknown): void {
   let value = unwrapObservable(textContent);
@@ -243,6 +256,572 @@ const uniqueNameHandler: BindingHandler = {
   },
 };
 
+// ---- Task 20: Event bindings ----
+
+const eventHandler: BindingHandler = {
+  init(node, valueAccessor, allBindings, viewModel, bindingContext) {
+    const el = node as HTMLElement;
+    const eventsToHandle = (valueAccessor() || {}) as Record<string, unknown>;
+    for (const eventName of Object.keys(eventsToHandle)) {
+      el.addEventListener(eventName, function (event: Event) {
+        const handlerFunction = (valueAccessor() as Record<string, Function>)[eventName];
+        if (!handlerFunction) return;
+
+        let handlerReturnValue: unknown;
+        try {
+          const data = bindingContext.$data;
+          handlerReturnValue = handlerFunction.call(data, data, event);
+        } finally {
+          if (handlerReturnValue !== true) {
+            event.preventDefault();
+          }
+        }
+
+        const bubble = allBindings.get(eventName + 'Bubble') !== false;
+        if (!bubble) {
+          event.stopPropagation();
+        }
+      });
+    }
+  },
+};
+
+function makeEventHandlerShortcut(eventName: string): BindingHandler {
+  return {
+    init(node, valueAccessor, allBindings, viewModel, bindingContext) {
+      const newValueAccessor = () => {
+        const result: Record<string, unknown> = {};
+        result[eventName] = valueAccessor();
+        return result;
+      };
+      return eventHandler.init!(node, newValueAccessor, allBindings, viewModel, bindingContext);
+    },
+  };
+}
+
+const clickHandler = makeEventHandlerShortcut('click');
+
+const submitHandler: BindingHandler = {
+  init(node, valueAccessor, _allBindings, _viewModel, bindingContext) {
+    if (typeof valueAccessor() !== 'function') {
+      throw new Error('The value for a submit binding must be a function');
+    }
+    (node as HTMLElement).addEventListener('submit', function (event: Event) {
+      let handlerReturnValue: unknown;
+      const value = valueAccessor() as Function;
+      try {
+        handlerReturnValue = value.call(bindingContext.$data, node);
+      } finally {
+        if (handlerReturnValue !== true) {
+          event.preventDefault();
+        }
+      }
+    });
+  },
+};
+
+// ---- Task 21: value binding ----
+
+const valueHandler: BindingHandler = {
+  init(node, valueAccessor, allBindings) {
+    const el = node as HTMLElement & { value: string; type?: string; selectedIndex?: number; options?: HTMLOptionsCollection; multiple?: boolean; size?: number };
+    const tagName = (el.tagName || '').toLowerCase();
+    const isInputElement = tagName === 'input';
+
+    if (isInputElement && (el.type === 'checkbox' || el.type === 'radio')) {
+      checkedValueHandler.update!(node, valueAccessor, allBindings, undefined, {} as never);
+      return;
+    }
+
+    let eventsToCatch: string[] = [];
+    const requestedEventsToCatch = allBindings.get('valueUpdate');
+    let elementValueBeforeEvent: unknown = null;
+
+    if (requestedEventsToCatch) {
+      if (typeof requestedEventsToCatch === 'string') {
+        eventsToCatch = [requestedEventsToCatch];
+      } else {
+        eventsToCatch = [...new Set(requestedEventsToCatch as string[])];
+      }
+      const changeIdx = eventsToCatch.indexOf('change');
+      if (changeIdx >= 0) eventsToCatch.splice(changeIdx, 1);
+    }
+
+    const valueUpdateHandler = () => {
+      elementValueBeforeEvent = null;
+      const modelValue = valueAccessor();
+      const elementValue = selectExtensions.readValue(el);
+      writeValueToProperty(modelValue, allBindings, 'value', elementValue);
+    };
+
+    for (const eventName of eventsToCatch) {
+      let handler = valueUpdateHandler;
+      if (eventName.startsWith('after')) {
+        const actualHandler = () => {
+          elementValueBeforeEvent = selectExtensions.readValue(el);
+          setTimeout(valueUpdateHandler, 0);
+        };
+        el.addEventListener(eventName.substring(5), actualHandler);
+        continue;
+      }
+      el.addEventListener(eventName, handler);
+    }
+
+    let updateFromModelComputed: Computed<void> | null = null;
+
+    const updateFromModel = () => {
+      let newValue = unwrapObservable(valueAccessor());
+      const elementValue = selectExtensions.readValue(el);
+
+      if (elementValueBeforeEvent !== null && newValue === elementValueBeforeEvent) {
+        setTimeout(updateFromModel, 0);
+        return;
+      }
+
+      const valueHasChanged = newValue !== elementValue;
+
+      if (valueHasChanged || elementValue === undefined) {
+        if (tagName === 'select') {
+          const allowUnset = allBindings.get('valueAllowUnset');
+          selectExtensions.writeValue(el, newValue, !!allowUnset);
+          if (!allowUnset && newValue !== selectExtensions.readValue(el)) {
+            ignore(valueUpdateHandler);
+          }
+        } else {
+          selectExtensions.writeValue(el, newValue);
+        }
+      }
+    };
+
+    if (tagName === 'select') {
+      el.addEventListener('change', () => {
+        if (updateFromModelComputed) valueUpdateHandler();
+      });
+      bindingEvent.subscribe(node, bindingEvent.childrenComplete, () => {
+        if (!updateFromModelComputed) {
+          updateFromModelComputed = new Computed(updateFromModel);
+          addDisposeCallback(node, () => updateFromModelComputed!.dispose());
+        } else if (allBindings.get('valueAllowUnset')) {
+          updateFromModel();
+        } else {
+          valueUpdateHandler();
+        }
+      }, null, { notifyImmediately: true });
+    } else {
+      el.addEventListener('change', valueUpdateHandler);
+      const comp = new Computed(updateFromModel);
+      addDisposeCallback(node, () => comp.dispose());
+    }
+  },
+  update() {},
+};
+
+// ---- Task 22: textInput binding ----
+
+const textInputHandler: BindingHandler = {
+  init(node, valueAccessor, allBindings) {
+    const el = node as HTMLInputElement | HTMLTextAreaElement;
+    let previousElementValue = el.value;
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+    let elementValueBeforeEvent: string | undefined;
+    let ourUpdate = false;
+
+    const updateModel = (_event?: Event) => {
+      clearTimeout(timeoutHandle);
+      elementValueBeforeEvent = timeoutHandle = undefined;
+
+      const elementValue = el.value;
+      if (previousElementValue !== elementValue) {
+        previousElementValue = elementValue;
+        writeValueToProperty(valueAccessor(), allBindings, 'textInput', elementValue);
+      }
+    };
+
+    const deferUpdateModel = (_event?: Event) => {
+      if (!timeoutHandle) {
+        elementValueBeforeEvent = el.value;
+        timeoutHandle = setTimeout(updateModel, 4);
+      }
+    };
+
+    const updateView = () => {
+      let modelValue = unwrapObservable(valueAccessor()) as string;
+
+      if (modelValue === null || modelValue === undefined) {
+        modelValue = '';
+      }
+
+      if (elementValueBeforeEvent !== undefined && modelValue === elementValueBeforeEvent) {
+        setTimeout(updateView, 4);
+        return;
+      }
+
+      if (el.value !== modelValue) {
+        ourUpdate = true;
+        el.value = modelValue;
+        ourUpdate = false;
+        previousElementValue = el.value;
+      }
+    };
+
+    el.addEventListener('input', updateModel);
+    el.addEventListener('change', updateModel);
+    el.addEventListener('blur', updateModel);
+
+    const viewComputed = new Computed(updateView);
+    addDisposeCallback(node, () => viewComputed.dispose());
+  },
+};
+
+const textinputAliasHandler: BindingHandler = {
+  preprocess(value, _name, addBinding) {
+    addBinding('textInput', value!);
+  },
+};
+
+// ---- Task 23: checked / checkedValue bindings ----
+
+function addOrRemoveItem<T>(array: T[], value: T, included: boolean): void {
+  const existingIndex = array.indexOf(value);
+  if (included && existingIndex < 0) {
+    array.push(value);
+  } else if (!included && existingIndex >= 0) {
+    array.splice(existingIndex, 1);
+  }
+}
+
+const checkedHandler: BindingHandler = {
+  after: ['value', 'attr'],
+  init(node, valueAccessor, allBindings) {
+    const el = node as HTMLInputElement;
+    const isCheckbox = el.type === 'checkbox';
+    const isRadio = el.type === 'radio';
+
+    if (!isCheckbox && !isRadio) return;
+
+    const checkedValue = new PureComputed(() => {
+      if (allBindings.has('checkedValue')) {
+        return unwrapObservable(allBindings.get('checkedValue'));
+      } else if (useElementValue) {
+        if (allBindings.has('value')) {
+          return unwrapObservable(allBindings.get('value'));
+        } else {
+          return el.value;
+        }
+      }
+    });
+
+    const rawValue = valueAccessor();
+    const valueIsArray = isCheckbox && (unwrapObservable(rawValue) instanceof Array);
+    const rawValueIsNonArrayObservable = !(valueIsArray && (rawValue as unknown[]).push && (rawValue as unknown[]).splice);
+    const useElementValue = isRadio || valueIsArray;
+    let oldElemValue: unknown = valueIsArray ? checkedValue.peek() : undefined;
+
+    if (isRadio && !el.name) {
+      uniqueNameHandler.init!(node, () => true, {} as AllBindingsAccessor, undefined, {} as never);
+    }
+
+    function updateModel() {
+      const isChecked = el.checked;
+      let elemValue = checkedValue.peek();
+
+      if (isInitial()) return;
+
+      if (!isChecked && (isRadio || getDependenciesCount())) return;
+
+      const modelValue = ignore(valueAccessor);
+      if (valueIsArray) {
+        const writableValue = rawValueIsNonArrayObservable
+          ? (modelValue as Observable<unknown[]>).peek()
+          : modelValue as unknown[];
+        const saveOldValue = oldElemValue;
+        oldElemValue = elemValue;
+
+        if (saveOldValue !== elemValue) {
+          if (isChecked) {
+            addOrRemoveItem(writableValue as unknown[], elemValue, true);
+            addOrRemoveItem(writableValue as unknown[], saveOldValue, false);
+          }
+        } else {
+          addOrRemoveItem(writableValue as unknown[], elemValue, isChecked);
+        }
+
+        if (rawValueIsNonArrayObservable && isWritableObs(modelValue)) {
+          (modelValue as Observable<unknown>).set(writableValue);
+        }
+      } else {
+        if (isCheckbox) {
+          if (elemValue === undefined) {
+            elemValue = isChecked;
+          } else if (!isChecked) {
+            elemValue = undefined;
+          }
+        }
+        writeValueToProperty(modelValue, allBindings, 'checked', elemValue, true);
+      }
+    }
+
+    function updateView() {
+      const modelValue = unwrapObservable(valueAccessor());
+      const elemValue = checkedValue.peek();
+
+      if (valueIsArray) {
+        el.checked = modelValue != null &&
+          (modelValue as unknown[]).indexOf(elemValue) >= 0;
+        oldElemValue = elemValue;
+      } else if (isCheckbox && elemValue === undefined) {
+        el.checked = !!modelValue;
+      } else {
+        el.checked = (checkedValue.peek() === modelValue);
+      }
+    }
+
+    const updateModelComputed = new Computed(updateModel);
+    addDisposeCallback(node, () => updateModelComputed.dispose());
+    el.addEventListener('click', updateModel);
+
+    const updateViewComputed = new Computed(updateView);
+    addDisposeCallback(node, () => updateViewComputed.dispose());
+  },
+};
+
+const checkedValueHandler: BindingHandler = {
+  update(node, valueAccessor) {
+    (node as HTMLInputElement).value = unwrapObservable(valueAccessor()) as string;
+  },
+};
+
+// ---- Task 24: hasfocus / hasFocus bindings ----
+
+const HASFOCUS_UPDATING = '__tapout_hasfocusUpdating';
+const HASFOCUS_LAST_VALUE = '__tapout_hasfocusLastValue';
+
+const hasfocusHandler: BindingHandler = {
+  init(node, valueAccessor, allBindings) {
+    const el = node as HTMLElement & Record<string, unknown>;
+
+    const handleElementFocusChange = (isFocused: boolean) => {
+      el[HASFOCUS_UPDATING] = true;
+      const ownerDoc = el.ownerDocument;
+      if (ownerDoc && 'activeElement' in ownerDoc) {
+        try {
+          isFocused = (ownerDoc.activeElement === el);
+        } catch {
+          isFocused = false;
+        }
+      }
+      const modelValue = valueAccessor();
+      writeValueToProperty(modelValue, allBindings, 'hasfocus', isFocused, true);
+      el[HASFOCUS_LAST_VALUE] = isFocused;
+      el[HASFOCUS_UPDATING] = false;
+    };
+
+    const handleFocusIn = () => handleElementFocusChange(true);
+    const handleFocusOut = () => handleElementFocusChange(false);
+
+    el.addEventListener('focus', handleFocusIn);
+    el.addEventListener('focusin', handleFocusIn);
+    el.addEventListener('blur', handleFocusOut);
+    el.addEventListener('focusout', handleFocusOut);
+
+    el[HASFOCUS_LAST_VALUE] = false;
+  },
+  update(node, valueAccessor) {
+    const el = node as HTMLElement & Record<string, unknown>;
+    const value = !!unwrapObservable(valueAccessor());
+
+    if (!el[HASFOCUS_UPDATING] && el[HASFOCUS_LAST_VALUE] !== value) {
+      if (value) {
+        el.focus();
+      } else {
+        el.blur();
+      }
+    }
+  },
+};
+
+// ---- Task 25: selectedOptions binding ----
+
+const selectedOptionsHandler: BindingHandler = {
+  init(node, valueAccessor, allBindings) {
+    const el = node as HTMLSelectElement;
+
+    if ((el.tagName || '').toLowerCase() !== 'select') {
+      throw new Error('selectedOptions binding applies only to SELECT elements');
+    }
+
+    function updateFromView() {
+      const value = valueAccessor();
+      const valueToWrite: unknown[] = [];
+      const options = el.getElementsByTagName('option');
+      for (let i = 0; i < options.length; i++) {
+        if ((options[i] as HTMLOptionElement).selected) {
+          valueToWrite.push(selectExtensions.readValue(options[i]));
+        }
+      }
+      writeValueToProperty(value, allBindings, 'selectedOptions', valueToWrite);
+    }
+
+    function updateFromModel() {
+      const newValue = unwrapObservable(valueAccessor()) as unknown[] | null;
+      const previousScrollTop = el.scrollTop;
+
+      if (newValue && typeof (newValue as unknown[]).length === 'number') {
+        const options = el.getElementsByTagName('option');
+        for (let i = 0; i < options.length; i++) {
+          const optEl = options[i] as HTMLOptionElement;
+          const isSelected = (newValue as unknown[]).indexOf(selectExtensions.readValue(optEl)) >= 0;
+          if (optEl.selected !== isSelected) {
+            optEl.selected = isSelected;
+          }
+        }
+      }
+
+      el.scrollTop = previousScrollTop;
+    }
+
+    let updateFromModelComputed: Computed<void> | null = null;
+    bindingEvent.subscribe(node, bindingEvent.childrenComplete, () => {
+      if (!updateFromModelComputed) {
+        el.addEventListener('change', updateFromView);
+        updateFromModelComputed = new Computed(updateFromModel);
+        addDisposeCallback(node, () => updateFromModelComputed!.dispose());
+      } else {
+        updateFromView();
+      }
+    }, null, { notifyImmediately: true });
+  },
+  update() {},
+};
+
+// ---- Task 26: options binding ----
+
+const CAPTION_PLACEHOLDER = {};
+
+const optionsHandler: BindingHandler = {
+  init(node) {
+    const el = node as HTMLSelectElement;
+    if ((el.tagName || '').toLowerCase() !== 'select') {
+      throw new Error('options binding applies only to SELECT elements');
+    }
+    while (el.options.length > 0) {
+      el.removeChild(el.options[0]);
+    }
+    return { controlsDescendantBindings: true };
+  },
+  update(node, valueAccessor, allBindings) {
+    const el = node as HTMLSelectElement;
+
+    function selectedOptions(): HTMLOptionElement[] {
+      return Array.from(el.options).filter(o => o.selected);
+    }
+
+    const selectWasPreviouslyEmpty = el.length === 0;
+    const multiple = el.multiple;
+    const previousScrollTop = (!selectWasPreviouslyEmpty && multiple) ? el.scrollTop : null;
+    let unwrappedArray = unwrapObservable(valueAccessor()) as unknown[];
+    const valueAllowUnset = allBindings.get('valueAllowUnset') && allBindings.has('value');
+    const includeDestroyed = allBindings.get('optionsIncludeDestroyed');
+    let filteredArray: unknown[] | undefined;
+    let previousSelectedValues: unknown[] = [];
+
+    if (!valueAllowUnset) {
+      if (multiple) {
+        previousSelectedValues = selectedOptions().map(o => selectExtensions.readValue(o));
+      } else if (el.selectedIndex >= 0) {
+        previousSelectedValues.push(selectExtensions.readValue(el.options[el.selectedIndex]));
+      }
+    }
+
+    if (unwrappedArray) {
+      if (!Array.isArray(unwrappedArray)) {
+        unwrappedArray = [unwrappedArray];
+      }
+
+      filteredArray = (unwrappedArray as unknown[]).filter((item: unknown) => {
+        return includeDestroyed || item === undefined || item === null ||
+          !unwrapObservable((item as Record<string, unknown>)?.['_destroy']);
+      });
+
+      if (allBindings.has('optionsCaption')) {
+        const captionValue = unwrapObservable(allBindings.get('optionsCaption'));
+        if (captionValue !== null && captionValue !== undefined) {
+          filteredArray.unshift(CAPTION_PLACEHOLDER);
+        }
+      }
+    }
+
+    function applyToObject(object: unknown, predicate: unknown, defaultValue: unknown): unknown {
+      if (typeof predicate === 'function') return (predicate as Function)(object);
+      if (typeof predicate === 'string') return (object as Record<string, unknown>)[predicate];
+      return defaultValue;
+    }
+
+    while (el.options.length > 0) {
+      el.removeChild(el.options[0]);
+    }
+
+    if (filteredArray) {
+      for (let i = 0; i < filteredArray.length; i++) {
+        const arrayEntry = filteredArray[i];
+        const option = el.ownerDocument.createElement('option') as HTMLOptionElement;
+
+        if (arrayEntry === CAPTION_PLACEHOLDER) {
+          option.textContent = String(unwrapObservable(allBindings.get('optionsCaption')) ?? '');
+          selectExtensions.writeValue(option, undefined);
+        } else {
+          const optionValue = applyToObject(arrayEntry, allBindings.get('optionsValue'), arrayEntry);
+          selectExtensions.writeValue(option, unwrapObservable(optionValue));
+
+          const optionText = applyToObject(arrayEntry, allBindings.get('optionsText'), optionValue);
+          option.textContent = String(unwrapObservable(optionText) ?? '');
+        }
+
+        el.appendChild(option);
+
+        if (previousSelectedValues.length) {
+          const isSelected = previousSelectedValues.indexOf(selectExtensions.readValue(option)) >= 0;
+          option.selected = isSelected;
+        }
+
+        if (allBindings.has('optionsAfterRender') && typeof allBindings.get('optionsAfterRender') === 'function') {
+          ignore(() => {
+            (allBindings.get('optionsAfterRender') as Function)(
+              option,
+              arrayEntry !== CAPTION_PLACEHOLDER ? arrayEntry : undefined,
+            );
+          });
+        }
+      }
+    }
+
+    if (!valueAllowUnset) {
+      let selectionChanged: boolean;
+      if (multiple) {
+        selectionChanged = previousSelectedValues.length > 0 && selectedOptions().length < previousSelectedValues.length;
+      } else {
+        selectionChanged = (previousSelectedValues.length > 0 && el.selectedIndex >= 0)
+          ? (selectExtensions.readValue(el.options[el.selectedIndex]) !== previousSelectedValues[0])
+          : (previousSelectedValues.length > 0 || el.selectedIndex >= 0);
+      }
+
+      if (selectionChanged) {
+        ignore(() => triggerEvent(el, 'change'));
+      }
+    }
+
+    if (valueAllowUnset || isInitial()) {
+      bindingEvent.notify(node, bindingEvent.childrenComplete);
+    }
+  },
+};
+
+function isWritableObs(value: unknown): value is Observable<unknown> | Computed<unknown> {
+  if (value instanceof Observable) return true;
+  if (value instanceof Computed) return value.hasWriteFunction;
+  return false;
+}
+
 // ---- Registration ----
 
 bindingHandlers['text'] = textHandler;
@@ -256,5 +835,25 @@ bindingHandlers['style'] = styleHandler;
 bindingHandlers['enable'] = enableHandler;
 bindingHandlers['disable'] = disableHandler;
 bindingHandlers['uniqueName'] = uniqueNameHandler;
+
+bindingHandlers['event'] = eventHandler;
+bindingHandlers['click'] = clickHandler;
+bindingHandlers['submit'] = submitHandler;
+bindingHandlers['value'] = valueHandler;
+bindingHandlers['textInput'] = textInputHandler;
+bindingHandlers['textinput'] = textinputAliasHandler;
+bindingHandlers['checked'] = checkedHandler;
+bindingHandlers['checkedValue'] = checkedValueHandler;
+bindingHandlers['hasfocus'] = hasfocusHandler;
+bindingHandlers['hasFocus'] = hasfocusHandler;
+bindingHandlers['selectedOptions'] = selectedOptionsHandler;
+bindingHandlers['options'] = optionsHandler;
+
+twoWayBindings['value'] = true;
+twoWayBindings['textInput'] = true;
+twoWayBindings['checked'] = true;
+twoWayBindings['hasfocus'] = true;
+twoWayBindings['hasFocus'] = 'hasfocus';
+twoWayBindings['selectedOptions'] = true;
 
 allowedVirtualElementBindings['text'] = true;

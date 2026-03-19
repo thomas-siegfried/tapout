@@ -87,6 +87,9 @@ export {
 export { bindingEvent } from './bindingEvent.js';
 export type { BindingInfo } from './bindingEvent.js';
 
+import * as selectExtensions from './selectExtensions.js';
+export { selectExtensions };
+
 import './bindings.js';
 
 import { Observable } from './observable.js';

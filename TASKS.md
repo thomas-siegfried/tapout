@@ -36,13 +36,13 @@
 
 ## Phase 5 — Built-in Bindings (Complex / Two-Way)
 
-- [ ] 20. Event bindings: `event`, `click`, `submit`
-- [ ] 21. `value` binding
-- [ ] 22. `textInput` binding
-- [ ] 23. `checked` / `checkedValue`
-- [ ] 24. `hasfocus` / `hasFocus`
-- [ ] 25. `selectedOptions`
-- [ ] 26. `options`
+- [x] 20. Event bindings: `event`, `click`, `submit`
+- [x] 21. `value` binding
+- [x] 22. `textInput` binding
+- [x] 23. `checked` / `checkedValue`
+- [x] 24. `hasfocus` / `hasFocus`
+- [x] 25. `selectedOptions`
+- [x] 26. `options`
 
 ## Phase 6 — Control Flow & Templates
 
