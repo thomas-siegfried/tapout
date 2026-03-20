@@ -73,6 +73,6 @@
 ## Phase 10 — Missing Features
 
 - [x] 41. Global error handler (`onError` option for wrapping internal callbacks)
-- [ ] 42. Version export (`version` string for debugging/tooling)
+- [x] 42. Version export (`version` string for debugging/tooling)
 - [ ] 43. `Subscription.disposeWhenNodeIsRemoved(node)` convenience method
 - [ ] 44. Export `peekObservable` utility from utils.ts

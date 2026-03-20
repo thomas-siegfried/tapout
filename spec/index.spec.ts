@@ -1,4 +1,5 @@
 import {
+  version,
   Subscribable,
   Subscription,
   isSubscribable,
@@ -77,6 +78,11 @@ import {
 } from '#src/index.js';
 
 describe('index exports', () => {
+  it('exports version as a semver string', () => {
+    expect(typeof version).toBe('string');
+    expect(version).toMatch(/^\d+\.\d+\.\d+/);
+  });
+
   it('exports Subscribable', () => {
     expect(Subscribable).toBeDefined();
   });

@@ -1,5 +1,7 @@
 export { options } from './options.js';
 
+export const version = '1.0.0';
+
 export { Subscribable, Subscription, isSubscribable, isReadableSubscribable, valuesArePrimitiveAndEqual } from './subscribable.js';
 export type { SubscriptionCallback, ReadableSubscribable } from './subscribable.js';
 
