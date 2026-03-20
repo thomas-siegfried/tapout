@@ -1,3 +1,5 @@
+export { options } from './options.js';
+
 export { Subscribable, Subscription, isSubscribable, isReadableSubscribable, valuesArePrimitiveAndEqual } from './subscribable.js';
 export type { SubscriptionCallback, ReadableSubscribable } from './subscribable.js';
 

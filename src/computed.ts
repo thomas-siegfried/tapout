@@ -1,6 +1,7 @@
 import { Subscribable, valuesArePrimitiveAndEqual } from './subscribable.js';
 import type { ReadableSubscribable } from './subscribable.js';
 import { begin, end, registerDependency } from './dependencyDetection.js';
+import { options } from './options.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnySubscribable = Subscribable<any>;
@@ -51,6 +52,10 @@ export class Computed<T> extends Subscribable<T> implements ReadableSubscribable
     if (!this._isSleeping && !this._deferEvaluation) {
       this.evaluateImmediate();
     }
+
+    if (options.deferUpdates) {
+      this.extend({ deferred: true });
+    }
   }
 
   get hasWriteFunction(): boolean {
@@ -83,7 +88,7 @@ export class Computed<T> extends Subscribable<T> implements ReadableSubscribable
 
   set(value: T): void {
     if (!this._writeFunction) {
-      throw new Error('Cannot write a value to a ko.computed unless you specify a \'write\' option.');
+      throw new Error('Cannot write a value to a computed unless you specify a \'write\' option.');
     }
     this._writeFunction(value);
   }
@@ -345,6 +350,9 @@ export class Computed<T> extends Subscribable<T> implements ReadableSubscribable
 
       if (!this._isSleeping && notifyChange) {
         this.notifySubscribers(this._latestValue);
+      }
+      if (this._recordUpdate) {
+        this._recordUpdate();
       }
     }
 

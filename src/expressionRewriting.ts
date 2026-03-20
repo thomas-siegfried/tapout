@@ -182,7 +182,7 @@ export function preProcessBindings(
   }
 
   if (propertyAccessorResultStrings.length) {
-    processKeyValue('_ko_property_writers', '{' + propertyAccessorResultStrings.join(',') + ' }');
+    processKeyValue('_tap_property_writers', '{' + propertyAccessorResultStrings.join(',') + ' }');
   }
 
   return resultStrings.join(',');
@@ -203,7 +203,7 @@ export function writeValueToProperty(
   checkIfDifferent?: boolean,
 ): void {
   if (!property || !isSubscribable(property)) {
-    const propWriters = allBindings.get('_ko_property_writers') as Record<string, (v: unknown) => void> | undefined;
+    const propWriters = allBindings.get('_tap_property_writers') as Record<string, (v: unknown) => void> | undefined;
     if (propWriters && propWriters[key]) {
       propWriters[key](value);
     }

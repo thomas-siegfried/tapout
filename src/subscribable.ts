@@ -169,6 +169,8 @@ export class Subscribable<T = unknown> {
   /** @internal */
   _limitBeforeChange?: (value: T) => void;
   /** @internal */
+  _recordUpdate?: () => void;
+  /** @internal */
   _notificationIsPending?: boolean;
   /** @internal */
   _changeSubscriptions?: Subscription<T>[];
@@ -226,6 +228,10 @@ export class Subscribable<T = unknown> {
         previousValue = value;
         self._origNotifySubscribers!(value, 'beforeChange');
       }
+    };
+
+    self._recordUpdate = function () {
+      didUpdate = true;
     };
   }
 }

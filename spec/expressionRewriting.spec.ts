@@ -158,7 +158,7 @@ describe('expressionRewriting', () => {
       try {
         const result = preProcessBindings('testValue: myProp');
         expect(result).toContain("'testValue':myProp");
-        expect(result).toContain("'_ko_property_writers'");
+        expect(result).toContain("'_tap_property_writers'");
         expect(result).toContain("'testValue':function(_z){myProp=_z}");
       } finally {
         delete twoWayBindings['testValue'];
@@ -179,7 +179,7 @@ describe('expressionRewriting', () => {
       twoWayBindings['testValue'] = true;
       try {
         const result = preProcessBindings('testValue: true');
-        expect(result).not.toContain('_ko_property_writers');
+        expect(result).not.toContain('_tap_property_writers');
       } finally {
         delete twoWayBindings['testValue'];
       }
@@ -187,7 +187,7 @@ describe('expressionRewriting', () => {
 
     it('does not generate writers when binding is not registered as two-way', () => {
       const result = preProcessBindings('text: name');
-      expect(result).not.toContain('_ko_property_writers');
+      expect(result).not.toContain('_tap_property_writers');
     });
 
     it('wraps Object() around complex assignment targets', () => {
@@ -213,7 +213,7 @@ describe('expressionRewriting', () => {
       twoWayBindings['testValue'] = true;
       try {
         const result = preProcessBindings('testValue: myProp', { bindingParams: true });
-        expect(result).not.toContain('_ko_property_writers');
+        expect(result).not.toContain('_tap_property_writers');
       } finally {
         delete twoWayBindings['testValue'];
       }
@@ -288,22 +288,22 @@ describe('expressionRewriting', () => {
       expect(obs.peek()).toBe('new');
     });
 
-    it('falls back to _ko_property_writers for non-observable', () => {
+    it('falls back to _tap_property_writers for non-observable', () => {
       let written: unknown;
       const writers = { value: (v: unknown) => { written = v; } };
       const allBindings: AllBindingsAccessor = {
-        get: (key: string) => key === '_ko_property_writers' ? writers : undefined,
+        get: (key: string) => key === '_tap_property_writers' ? writers : undefined,
         has: () => false,
       };
       writeValueToProperty('not-an-observable', allBindings, 'value', 'hello');
       expect(written).toBe('hello');
     });
 
-    it('falls back to _ko_property_writers for null property', () => {
+    it('falls back to _tap_property_writers for null property', () => {
       let written: unknown;
       const writers = { value: (v: unknown) => { written = v; } };
       const allBindings: AllBindingsAccessor = {
-        get: (key: string) => key === '_ko_property_writers' ? writers : undefined,
+        get: (key: string) => key === '_tap_property_writers' ? writers : undefined,
         has: () => false,
       };
       writeValueToProperty(null, allBindings, 'value', 42);

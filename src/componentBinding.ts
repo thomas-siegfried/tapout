@@ -115,11 +115,11 @@ const componentHandler: BindingHandler = {
           },
         });
 
-        if (componentViewModel && typeof (componentViewModel as Record<string, unknown>).koDescendantsComplete === 'function') {
+        if (componentViewModel && typeof (componentViewModel as Record<string, unknown>).onDescendantsComplete === 'function') {
           afterRenderSub = bindingEvent.subscribe(
             element,
             bindingEvent.descendantsComplete,
-            (componentViewModel as Record<string, unknown>).koDescendantsComplete as (value: unknown) => void,
+            (componentViewModel as Record<string, unknown>).onDescendantsComplete as (value: unknown) => void,
             componentViewModel,
           );
         }

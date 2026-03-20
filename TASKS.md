@@ -62,3 +62,17 @@
 - [x] 34. Select Extensions (arbitrary JS objects as option values)
 - [x] 35. Memoization (deferred binding via comment markers)
 - [x] 36. Template Rewriting
+- [x] 37. Global `options.deferUpdates` (auto-apply deferred extender to all new observables/computeds)
+
+## Phase 9 — Naming Cleanup
+
+- [x] 38. Rename `_ko_property_writers` to `_tap_property_writers` (expressionRewriting.ts + specs)
+- [x] 39. Rename `koDescendantsComplete` to `onDescendantsComplete` (componentBinding.ts)
+- [x] 40. Fix `ko.computed` error message in computed.ts
+
+## Phase 10 — Missing Features
+
+- [ ] 41. Global error handler (`onError` option for wrapping internal callbacks)
+- [ ] 42. Version export (`version` string for debugging/tooling)
+- [ ] 43. `Subscription.disposeWhenNodeIsRemoved(node)` convenience method
+- [ ] 44. Export `peekObservable` utility from utils.ts

@@ -291,7 +291,7 @@ describe('BindingContext', () => {
     });
 
     it('works with comment nodes (nodeType 8)', () => {
-      const comment = document.createComment('ko test') as unknown as Node;
+      const comment = document.createComment('tap test') as unknown as Node;
       const vm = { name: 'comment' };
       const ctx = new BindingContext(vm);
       domDataSet(comment, BINDING_INFO_KEY, { context: ctx });
