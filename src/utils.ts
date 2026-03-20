@@ -13,7 +13,7 @@ export function unwrapObservable(value: unknown): unknown {
   return value;
 }
 
-function peekObservable(value: unknown): unknown {
+export function peekObservable(value: unknown): unknown {
   for (let i = 0; isReadableSubscribable(value) && i < MAX_NESTED_OBSERVABLE_DEPTH; i++) {
     value = value.peek();
   }

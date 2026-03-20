@@ -2,6 +2,8 @@ import {
   Subscribable,
   Subscription,
   isSubscribable,
+  cleanNode,
+  removeNode,
   type SubscriptionCallback,
 } from '#src/index.js';
 
@@ -35,6 +37,57 @@ describe('Subscription', () => {
     s.dispose();
     sub.notifySubscribers(42);
     expect(values).toEqual([]);
+  });
+
+  describe('disposeWhenNodeIsRemoved', () => {
+    it('disposes subscription when node is cleaned', () => {
+      const sub = new Subscribable<number>();
+      const values: number[] = [];
+      const s = sub.subscribe(v => values.push(v));
+
+      const node = document.createElement('div');
+      s.disposeWhenNodeIsRemoved(node);
+
+      sub.notifySubscribers(1);
+      expect(values).toEqual([1]);
+
+      cleanNode(node);
+
+      sub.notifySubscribers(2);
+      expect(values).toEqual([1]);
+      expect(s.closed).toBe(true);
+    });
+
+    it('disposes subscription when node is removed', () => {
+      const parent = document.createElement('div');
+      const child = document.createElement('span');
+      parent.appendChild(child);
+
+      const sub = new Subscribable<string>();
+      const values: string[] = [];
+      const s = sub.subscribe(v => values.push(v));
+      s.disposeWhenNodeIsRemoved(child);
+
+      sub.notifySubscribers('before');
+      expect(values).toEqual(['before']);
+
+      removeNode(child);
+
+      sub.notifySubscribers('after');
+      expect(values).toEqual(['before']);
+      expect(s.closed).toBe(true);
+    });
+
+    it('does not dispose if node is still alive', () => {
+      const sub = new Subscribable<number>();
+      const s = sub.subscribe(() => {});
+      const node = document.createElement('div');
+      s.disposeWhenNodeIsRemoved(node);
+
+      expect(s.closed).toBe(false);
+      sub.notifySubscribers(1);
+      expect(s.closed).toBe(false);
+    });
   });
 });
 

@@ -1,5 +1,6 @@
 import { begin, end } from './dependencyDetection.js';
 import { getExtenderHandler } from './extenders.js';
+import { addDisposeCallback } from './domNodeDisposal.js';
 
 export type SubscriptionCallback<T> = (value: T) => void;
 
@@ -45,6 +46,10 @@ export class Subscription<T> {
 
   get closed(): boolean {
     return this._isDisposed;
+  }
+
+  disposeWhenNodeIsRemoved(node: Node): void {
+    addDisposeCallback(node, () => this.dispose());
   }
 
   /** @internal */

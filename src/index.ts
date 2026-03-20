@@ -31,7 +31,7 @@ export { registerExtender, throttle, debounce } from './extenders.js';
 export type { ExtenderHandler, RateLimitOptions } from './extenders.js';
 
 export {
-  unwrapObservable, toJS, toJSON, when,
+  unwrapObservable, peekObservable, toJS, toJSON, when,
   cloneNodes,
   fixUpContinuousNodeArray,
   replaceDomNodes,
