@@ -1,3 +1,5 @@
+import { options } from './options.js';
+
 type TaskCallback = () => void;
 
 let taskQueue: (TaskCallback | null)[] = [];
@@ -11,9 +13,11 @@ export let scheduler: (callback: TaskCallback) => void =
     : (cb) => setTimeout(cb, 0);
 
 function deferError(error: unknown): void {
-  setTimeout(() => {
-    throw error;
-  }, 0);
+  if (options.onError) {
+    options.onError(error);
+  } else {
+    setTimeout(() => { throw error; }, 0);
+  }
 }
 
 function processTasks(): void {

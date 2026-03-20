@@ -37,6 +37,7 @@ export {
   parseHtmlFragment,
   domNodeIsAttachedToDocument,
   anyDomNodeIsAttachedToDocument,
+  catchFunctionErrors,
 } from './utils.js';
 
 export { schedule, cancel, runEarly, resetForTesting } from './tasks.js';

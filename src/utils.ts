@@ -2,6 +2,7 @@ import { PureComputed } from './computed.js';
 import { isReadableSubscribable } from './subscribable.js';
 import type { ReadableSubscribable, Subscription } from './subscribable.js';
 import { cleanNode, removeNode } from './domNodeDisposal.js';
+import { options } from './options.js';
 
 const MAX_NESTED_OBSERVABLE_DEPTH = 10;
 
@@ -194,4 +195,16 @@ export function anyDomNodeIsAttachedToDocument(nodes: Node[]): boolean {
     if (domNodeIsAttachedToDocument(nodes[i])) return true;
   }
   return false;
+}
+
+export function catchFunctionErrors<T extends (...args: never[]) => unknown>(delegate: T): T {
+  if (!options.onError) return delegate;
+  return function (this: unknown, ...args: Parameters<T>) {
+    try {
+      return delegate.apply(this, args);
+    } catch (e) {
+      options.onError?.(e);
+      throw e;
+    }
+  } as unknown as T;
 }
