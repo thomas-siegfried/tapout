@@ -1,7 +1,7 @@
-import { unwrapObservable } from './utils.js';
+import { unwrapObservable, parseHtmlFragment } from './utils.js';
 import { bindingHandlers } from './bindingProvider.js';
 import type { BindingHandler, AllBindingsAccessor } from './bindingProvider.js';
-import { allowedVirtualElementBindings, virtualFirstChild, virtualNextSibling, virtualSetChildren } from './virtualElements.js';
+import { allowedVirtualElementBindings, virtualFirstChild, virtualNextSibling, virtualSetChildren, virtualEmptyNode } from './virtualElements.js';
 import { addDisposeCallback, removeNode } from './domNodeDisposal.js';
 import { twoWayBindings, writeValueToProperty } from './expressionRewriting.js';
 import { Computed, PureComputed } from './computed.js';
@@ -39,13 +39,21 @@ function emptyDomNode(node: Node): void {
 }
 
 function setHtml(node: Node, html: unknown): void {
-  emptyDomNode(node);
   html = unwrapObservable(html);
-  if (html === null || html === undefined) return;
 
-  const htmlString = typeof html === 'string' ? html : String(html);
-  const el = node as Element;
-  el.innerHTML = htmlString;
+  if (node.nodeType === 8) {
+    if (html != null) {
+      const parsedNodes = parseHtmlFragment('' + html, node.ownerDocument ?? undefined);
+      virtualSetChildren(node, parsedNodes);
+    } else {
+      virtualEmptyNode(node);
+    }
+  } else {
+    emptyDomNode(node);
+    if (html === null || html === undefined) return;
+    const el = node as Element;
+    el.innerHTML = typeof html === 'string' ? html : String(html);
+  }
 }
 
 const CSS_CLASS_REGEX = /\S+/g;
@@ -857,3 +865,4 @@ twoWayBindings['hasFocus'] = 'hasfocus';
 twoWayBindings['selectedOptions'] = true;
 
 allowedVirtualElementBindings['text'] = true;
+allowedVirtualElementBindings['html'] = true;

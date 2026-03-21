@@ -76,3 +76,11 @@
 - [x] 42. Version export (`version` string for debugging/tooling)
 - [x] 43. `Subscription.disposeWhenNodeIsRemoved(node)` convenience method
 - [x] 44. Export `peekObservable` utility from utils.ts
+
+## Phase 11 — Enhanced Template Syntax (from knockout-punches)
+
+- [x] 45. Preprocessor infrastructure (internal chaining system for binding and node preprocessors)
+- [x] 46. Text interpolation markup (`{{ expression }}` in text nodes, `{{{ html }}}`, `{{# binding }}` virtual elements)
+- [x] 47. Attribute interpolation markup (`{{ }}` inside HTML attributes, auto-converts to bindings)
+- [x] 48. Namespaced bindings (`attr.href`, `css.active`, `style.color`, `event.click` dot-syntax)
+- [x] 49. Filter/pipe syntax (`expression | filter1 | filter2:arg`) with built-in filters: `uppercase`, `lowercase`, `default`, `json`

@@ -242,7 +242,7 @@ function applyBindingsToDescendantsInternal(
 
   if (nextInQueue) {
     const provider = providerInstance;
-    const preprocessNode = (provider as { preprocessNode?(node: Node): void }).preprocessNode;
+    const preprocessNode = provider.preprocessNode;
 
     if (preprocessNode) {
       let currentChild: Node | null = nextInQueue;

@@ -89,9 +89,13 @@ export {
   BindingProvider,
   bindingHandlers,
   getBindingHandler,
+  addBindingPreprocessor,
+  addNodePreprocessor,
+  addBindingHandlerCreator,
+  chainPreprocessor,
   instance as bindingProviderInstance,
 } from './bindingProvider.js';
-export type { BindingHandler } from './bindingProvider.js';
+export type { BindingHandler, PreprocessFn, NodePreprocessFn } from './bindingProvider.js';
 
 export {
   applyBindings,
@@ -137,6 +141,34 @@ export { components };
 export type { ComponentDefinition, ComponentConfig, ComponentLoader, ComponentInfo } from './components.js';
 
 export { getComponentNameForNode, addBindingsForCustomElement } from './componentBinding.js';
+
+export {
+  parseInterpolationMarkup,
+  wrapExpression,
+  interpolationMarkupPreprocessor,
+  enableInterpolationMarkup,
+} from './interpolationMarkup.js';
+
+export {
+  attributeBinding,
+  setAttributeBinding,
+  attributeInterpolationMarkupPreprocessor,
+  enableAttributeInterpolationMarkup,
+} from './attributeInterpolationMarkup.js';
+
+export {
+  defaultGetNamespacedHandler,
+  enableNamespacedBindings,
+  autoNamespacedPreprocessor,
+  enableAutoNamespacedSyntax,
+  addDefaultNamespacedBindingPreprocessor,
+} from './namespacedBindings.js';
+
+export {
+  filters,
+  filterPreprocessor,
+  enableTextFilter,
+} from './filters.js';
 
 import './bindings.js';
 import './templateRendering.js';

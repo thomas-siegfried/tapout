@@ -3,6 +3,7 @@ import type { AllBindingsAccessor } from './expressionRewriting.js';
 export type { AllBindingsAccessor } from './expressionRewriting.js';
 import { preProcessBindings } from './expressionRewriting.js';
 import { hasBindingValue, virtualNodeBindingValue } from './virtualElements.js';
+import { unwrapObservable } from './utils.js';
 
 const DATA_BIND_ATTR = 'data-bind';
 
@@ -32,14 +33,97 @@ export interface BindingHandler {
   ): string | void;
 
   after?: string[];
+
+  getNamespacedHandler?(name: string, namespace: string, namespacedName: string): BindingHandler;
 }
 
 // ---- Binding Handler Registry ----
 
 export const bindingHandlers: Record<string, BindingHandler> = {};
 
+let _getBindingHandlerImpl = (key: string): BindingHandler | undefined => bindingHandlers[key];
+
 export function getBindingHandler(key: string): BindingHandler | undefined {
-  return bindingHandlers[key];
+  return _getBindingHandlerImpl(key);
+}
+
+// ---- Preprocessor Infrastructure ----
+
+export type PreprocessFn = (
+  value: string,
+  key: string,
+  addBinding: (key: string, val: string) => void,
+) => string | void;
+
+export type NodePreprocessFn = (node: Node) => Node[] | void;
+
+function getOrCreateHandler(bindingKeyOrHandler: string | BindingHandler): BindingHandler {
+  if (typeof bindingKeyOrHandler === 'object') return bindingKeyOrHandler;
+  return getBindingHandler(bindingKeyOrHandler) || (bindingHandlers[bindingKeyOrHandler] = {});
+}
+
+export function chainPreprocessor(
+  handler: BindingHandler,
+  fn: PreprocessFn,
+): BindingHandler {
+  const previous = handler.preprocess;
+  if (previous) {
+    handler.preprocess = function (value, key, addBinding) {
+      const result = previous(value, key, addBinding);
+      if (result !== undefined) {
+        return fn(result, key, addBinding);
+      }
+    };
+  } else {
+    handler.preprocess = fn;
+  }
+  return handler;
+}
+
+export function addBindingPreprocessor(
+  bindingKeyOrHandler: string | BindingHandler,
+  preprocessFn: PreprocessFn,
+): BindingHandler {
+  return chainPreprocessor(getOrCreateHandler(bindingKeyOrHandler), preprocessFn);
+}
+
+export function addNodePreprocessor(preprocessFn: NodePreprocessFn): void {
+  const provider = instance;
+  const previous = provider.preprocessNode;
+  if (previous) {
+    provider.preprocessNode = function (node: Node): Node[] | void {
+      const newNodes = previous.call(this, node);
+      if (!newNodes) {
+        return preprocessFn.call(this, node);
+      }
+      return newNodes;
+    };
+  } else {
+    provider.preprocessNode = preprocessFn;
+  }
+}
+
+export function addBindingHandlerCreator(
+  matchRegex: RegExp,
+  callbackFn: (match: RegExpMatchArray, bindingKey: string) => BindingHandler | undefined,
+): void {
+  const previousImpl = _getBindingHandlerImpl;
+  _getBindingHandlerImpl = (key) => {
+    const existing = previousImpl(key);
+    if (existing) return existing;
+    const match = key.match(matchRegex);
+    return match ? callbackFn(match, key) : undefined;
+  };
+}
+
+// ---- Filters Registry (injected by filters module) ----
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+let _filters: Record<string, Function> = {};
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+export function setFiltersRegistry(filters: Record<string, Function>): void {
+  _filters = filters;
 }
 
 // ---- Compiled Binding Function Cache ----
@@ -56,7 +140,9 @@ function createBindingsStringEvaluator(
   });
   const functionBody = "with($context){with($data||{}){return{" + rewrittenBindings + "}}}";
   // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-  return new Function("$context", "$element", functionBody) as BindingEvaluator;
+  const innerFn = new Function("$context", "$element", "$unwrap", "$filters", functionBody) as
+    (context: BindingContext, element: Node, unwrap: typeof unwrapObservable, filters: Record<string, Function>) => Record<string, unknown> | null;
+  return (context, element) => innerFn(context, element, unwrapObservable, _filters);
 }
 
 function createBindingsStringEvaluatorViaCache(
@@ -93,6 +179,7 @@ export function setCustomElementHooks(
 
 export class BindingProvider {
   bindingCache: Record<string, BindingEvaluator> = {};
+  preprocessNode?: NodePreprocessFn;
 
   nodeHasBindings(node: Node): boolean {
     switch (node.nodeType) {
