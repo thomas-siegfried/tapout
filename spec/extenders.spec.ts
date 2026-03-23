@@ -21,15 +21,31 @@ describe('extend()', () => {
     expect(log).toEqual(['a', 'b']);
   });
 
-  it('ignores unknown extender names', () => {
+  it('throws on unknown extender names', () => {
     const obs = new Observable(1);
-    expect(() => obs.extend({ nonExistent: true })).not.toThrow();
+    expect(() => obs.extend({ nonExistent: true })).toThrowError("Unknown extender: 'nonExistent'");
   });
 
   it('works on Computed', () => {
     const comp = new Computed(() => 42);
     const result = comp.extend({ notify: 'always' });
     expect(result).toBe(comp);
+  });
+
+  it('accepts custom-registered extenders not in ExtenderMap', () => {
+    let receivedValue: unknown;
+    registerExtender('customThing', (_target, value) => { receivedValue = value; });
+
+    const obs = new Observable(1);
+    expect(() => obs.extend({ customThing: { threshold: 42 } })).not.toThrow();
+    expect(receivedValue).toEqual({ threshold: 42 });
+  });
+
+  it('allows mixing built-in and custom extenders', () => {
+    registerExtender('myLogger', () => {});
+
+    const obs = new Observable(1);
+    expect(() => obs.extend({ notify: 'always', myLogger: true })).not.toThrow();
   });
 });
 

@@ -8,8 +8,10 @@ export const options: {
   deferUpdates: boolean;
   onError: ((error: unknown) => void) | null;
   viewModelFactory: ViewModelFactory;
+  customElementDisplayContents: boolean;
 } = {
   deferUpdates: false,
   onError: null,
   viewModelFactory: defaultViewModelFactory,
+  customElementDisplayContents: true,
 };

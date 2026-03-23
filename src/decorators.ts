@@ -2,6 +2,7 @@ import { Observable } from './observable.js';
 import { ObservableArray } from './observableArray.js';
 import { Computed } from './computed.js';
 import type { Subscribable } from './subscribable.js';
+import type { ExtenderOptions } from './extenders.js';
 import { registerDependency } from './dependencyDetection.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -12,8 +13,6 @@ type AnyAccessorValue = ClassAccessorDecoratorTarget<any, any>;
 type AnyAccessorContext = ClassAccessorDecoratorContext<any, any>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyAccessorResult = ClassAccessorDecoratorResult<any, any>;
-
-type ExtenderOptions = Record<string, unknown>;
 
 // --- Observable registry for getObservable() ---
 

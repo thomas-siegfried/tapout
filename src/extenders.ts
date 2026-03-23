@@ -4,6 +4,15 @@ import { schedule, cancel } from './tasks.js';
 
 export type ExtenderHandler = (target: Subscribable, value: unknown) => Subscribable | void;
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface ExtenderMap {
+  notify: 'always';
+  rateLimit: number | RateLimitOptions;
+  deferred: true;
+}
+
+export type ExtenderOptions = Partial<ExtenderMap> & Record<string, unknown>;
+
 const registry: Record<string, ExtenderHandler> = {};
 
 export function registerExtender(name: string, handler: ExtenderHandler): void {

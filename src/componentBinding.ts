@@ -2,7 +2,7 @@ import { Computed } from './computed.js';
 import { ignore } from './dependencyDetection.js';
 import { addDisposeCallback } from './domNodeDisposal.js';
 import { bindingEvent } from './bindingEvent.js';
-import { BindingProvider, bindingHandlers, setCustomElementHooks } from './bindingProvider.js';
+import { BindingProvider, bindingHandlers, setCustomElementHooks, addNodePreprocessor } from './bindingProvider.js';
 import type { BindingHandler } from './bindingProvider.js';
 import { BindingContext } from './bindingContext.js';
 import { applyBindingsToDescendants } from './applyBindings.js';
@@ -18,6 +18,7 @@ import { Observable } from './observable.js';
 import { parseObjectLiteral } from './expressionRewriting.js';
 import { getObservable } from './decorators.js';
 import { wireParams } from './wireParams.js';
+import { options } from './options.js';
 import * as components from './components.js';
 import type { ComponentDefinition, ComponentInfo } from './components.js';
 
@@ -115,6 +116,10 @@ const componentHandler: BindingHandler = {
         if (componentViewModel && componentViewModel !== componentParams &&
             typeof componentParams === 'object' && componentParams !== null) {
           wireParams(componentViewModel as object, componentParams as Record<string, unknown>, element);
+        }
+
+        if (componentViewModel && typeof (componentViewModel as Record<string, unknown>).onInit === 'function') {
+          ((componentViewModel as Record<string, unknown>).onInit as () => void)();
         }
 
         const childBindingContext = asyncContext.createChildContext(componentViewModel, {
@@ -298,3 +303,15 @@ export function addBindingsForCustomElement(
 
 // Register hooks on the binding provider to enable custom element detection
 setCustomElementHooks(getComponentNameForNode, addBindingsForCustomElement);
+
+// Apply display:contents to custom elements so they don't affect layout.
+// Opt out per-element with the "layout" attribute, or globally via options.customElementDisplayContents.
+addNodePreprocessor((node: Node): Node[] | void => {
+  if (!options.customElementDisplayContents) return;
+  if (node.nodeType === 1 && node.nodeName.includes('-')) {
+    const el = node as HTMLElement;
+    if (!el.hasAttribute('layout')) {
+      el.style.display = 'contents';
+    }
+  }
+});

@@ -9,6 +9,7 @@ import {
   BindingProvider,
   bindingProviderInstance,
   BindingContext,
+  options,
 } from '#src/index.js';
 
 const window = new Window();
@@ -239,5 +240,118 @@ describe('Custom element rendering', () => {
 
     cleanNode(container);
     document.body.removeChild(container as never);
+  });
+});
+
+describe('Custom element display:contents preprocessor', () => {
+  afterEach(() => {
+    components._resetForTesting();
+    options.customElementDisplayContents = true;
+  });
+
+  it('applies display:contents to custom elements by default', () => {
+    components.register('styled-comp', {
+      template: '<span>styled</span>',
+      synchronous: true,
+    });
+
+    const container = createElement('div');
+    const el = createElement('styled-comp') as unknown as HTMLElement;
+    container.appendChild(el as never);
+    document.body.appendChild(container as never);
+
+    applyBindings({}, container);
+
+    expect(el.style.display).toBe('contents');
+
+    cleanNode(container);
+    document.body.removeChild(container as never);
+  });
+
+  it('does not apply display:contents when the element has a layout attribute', () => {
+    components.register('layout-comp', {
+      template: '<span>layout</span>',
+      synchronous: true,
+    });
+
+    const container = createElement('div');
+    const el = createElement('layout-comp', { layout: '' }) as unknown as HTMLElement;
+    container.appendChild(el as never);
+    document.body.appendChild(container as never);
+
+    applyBindings({}, container);
+
+    expect(el.style.display).not.toBe('contents');
+
+    cleanNode(container);
+    document.body.removeChild(container as never);
+  });
+
+  it('does not apply display:contents when customElementDisplayContents is false', () => {
+    options.customElementDisplayContents = false;
+
+    components.register('no-style-comp', {
+      template: '<span>no style</span>',
+      synchronous: true,
+    });
+
+    const container = createElement('div');
+    const el = createElement('no-style-comp') as unknown as HTMLElement;
+    container.appendChild(el as never);
+    document.body.appendChild(container as never);
+
+    applyBindings({}, container);
+
+    expect(el.style.display).not.toBe('contents');
+
+    cleanNode(container);
+    document.body.removeChild(container as never);
+  });
+
+  it('does not affect standard HTML elements', () => {
+    const container = createElement('div');
+    const el = createElement('div') as unknown as HTMLElement;
+    container.appendChild(el as never);
+    document.body.appendChild(container as never);
+
+    applyBindings({}, container);
+
+    expect(el.style.display).not.toBe('contents');
+
+    cleanNode(container);
+    document.body.removeChild(container as never);
+  });
+
+  it('restores behavior when customElementDisplayContents is toggled back to true', () => {
+    options.customElementDisplayContents = false;
+
+    components.register('toggle-comp', {
+      template: '<span>toggle</span>',
+      synchronous: true,
+    });
+
+    const container1 = createElement('div');
+    const el1 = createElement('toggle-comp') as unknown as HTMLElement;
+    container1.appendChild(el1 as never);
+    document.body.appendChild(container1 as never);
+
+    applyBindings({}, container1);
+    expect(el1.style.display).not.toBe('contents');
+
+    cleanNode(container1);
+    document.body.removeChild(container1 as never);
+
+    options.customElementDisplayContents = true;
+
+    const container2 = createElement('div');
+    const el2 = createElement('toggle-comp') as unknown as HTMLElement;
+    container2.appendChild(el2 as never);
+    document.body.appendChild(container2 as never);
+
+    applyBindings({}, container2);
+    expect(el2.style.display).toBe('contents');
+
+    cleanNode(container2);
+    document.body.removeChild(container2 as never);
   });
 });

@@ -1,5 +1,6 @@
 import { begin, end } from './dependencyDetection.js';
 import { getExtenderHandler } from './extenders.js';
+import type { ExtenderOptions } from './extenders.js';
 import { addDisposeCallback } from './domNodeDisposal.js';
 
 export type SubscriptionCallback<T> = (value: T) => void;
@@ -154,12 +155,14 @@ export class Subscribable<T = unknown> {
     return true;
   }
 
-  extend(requestedExtenders: Record<string, unknown>): this {
+  extend(requestedExtenders: ExtenderOptions): this {
     for (const [key, value] of Object.entries(requestedExtenders)) {
       const handler = getExtenderHandler(key);
       if (typeof handler === 'function') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         handler(this as Subscribable<any>, value);
+      } else {
+        throw new Error(`Unknown extender: '${key}'`);
       }
     }
     return this;
