@@ -15,6 +15,9 @@ import {
 import { cloneNodes, unwrapObservable } from './utils.js';
 import { isReadableSubscribable } from './subscribable.js';
 import { Observable } from './observable.js';
+import { parseObjectLiteral } from './expressionRewriting.js';
+import { getObservable } from './decorators.js';
+import { wireParams } from './wireParams.js';
 import * as components from './components.js';
 import type { ComponentDefinition, ComponentInfo } from './components.js';
 
@@ -108,6 +111,12 @@ const componentHandler: BindingHandler = {
         };
 
         const componentViewModel = createViewModel(componentDefinition, componentParams, componentInfo);
+
+        if (componentViewModel && componentViewModel !== componentParams &&
+            typeof componentParams === 'object' && componentParams !== null) {
+          wireParams(componentViewModel as object, componentParams as Record<string, unknown>, element);
+        }
+
         const childBindingContext = asyncContext.createChildContext(componentViewModel, {
           extend(ctx: BindingContext) {
             ctx['$component'] = componentViewModel;
@@ -158,6 +167,13 @@ function isWritable(value: unknown): boolean {
 
 const nativeProviderInstance = new BindingProvider();
 
+const CONTEXT_KEYWORDS = new Set([
+  '$data', '$rawData', '$root', '$parent', '$parentContext',
+  '$parents', '$component', '$componentTemplateNodes', '$index',
+]);
+
+const OBSERVABLE_REF_PATTERN = /^\$([a-zA-Z_$][\w$]*)$/;
+
 function getComponentParamsFromCustomElement(
   elem: Element,
   bindingContext: BindingContext,
@@ -165,47 +181,79 @@ function getComponentParamsFromCustomElement(
   const paramsAttribute = elem.getAttribute('params');
 
   if (paramsAttribute) {
-    const params = nativeProviderInstance.parseBindingsString(
-      paramsAttribute,
-      bindingContext,
-      elem,
-      { valueAccessors: true },
-    ) as Record<string, () => unknown> | null;
+    const keyValuePairs = parseObjectLiteral(paramsAttribute);
+    const observableRefParams: Record<string, string> = {};
+    const normalPairs: string[] = [];
 
-    if (!params) return { $raw: {} };
+    for (const kv of keyValuePairs) {
+      const key = kv.key || kv.unknown || '';
+      const val = (kv.value || '').trim();
+      const match = val.match(OBSERVABLE_REF_PATTERN);
 
-    const rawParamComputedValues: Record<string, Computed<unknown>> = {};
-    for (const paramName of Object.keys(params)) {
-      rawParamComputedValues[paramName] = new Computed(
-        params[paramName] as () => unknown,
-      );
-      addDisposeCallback(elem, () => rawParamComputedValues[paramName].dispose());
+      if (match && !CONTEXT_KEYWORDS.has(val)) {
+        observableRefParams[key] = match[1];
+      } else if (key) {
+        normalPairs.push(key + ':' + (kv.value || ''));
+      }
     }
 
     const result: Record<string, unknown> = {};
-    for (const paramName of Object.keys(rawParamComputedValues)) {
-      const paramValueComputed = rawParamComputedValues[paramName];
-      const paramValue = paramValueComputed.peek();
+    const rawParamComputedValues: Record<string, Computed<unknown>> = {};
 
-      if (!paramValueComputed.isActive()) {
-        result[paramName] = paramValue;
-      } else {
-        result[paramName] = new Computed({
-          read() {
-            return unwrapObservable(paramValueComputed.get());
-          },
-          write: isWritable(paramValue)
-            ? (value: unknown) => {
-                const currentObs = paramValueComputed.get();
-                if (currentObs instanceof Observable) {
-                  currentObs.set(value);
-                } else if (currentObs instanceof Computed && (currentObs as Computed<unknown>).hasWriteFunction) {
-                  (currentObs as Computed<unknown>).set(value);
-                }
-              }
-            : undefined,
-        });
-        addDisposeCallback(elem, () => (result[paramName] as Computed<unknown>).dispose());
+    if (normalPairs.length > 0) {
+      const normalParamsString = normalPairs.join(',');
+      const params = nativeProviderInstance.parseBindingsString(
+        normalParamsString,
+        bindingContext,
+        elem,
+        { valueAccessors: true },
+      ) as Record<string, () => unknown> | null;
+
+      if (params) {
+        for (const paramName of Object.keys(params)) {
+          rawParamComputedValues[paramName] = new Computed(
+            params[paramName] as () => unknown,
+          );
+          addDisposeCallback(elem, () => rawParamComputedValues[paramName].dispose());
+        }
+
+        for (const paramName of Object.keys(rawParamComputedValues)) {
+          const paramValueComputed = rawParamComputedValues[paramName];
+          const paramValue = paramValueComputed.peek();
+
+          if (!paramValueComputed.isActive()) {
+            result[paramName] = paramValue;
+          } else {
+            result[paramName] = new Computed({
+              read() {
+                return unwrapObservable(paramValueComputed.get());
+              },
+              write: isWritable(paramValue)
+                ? (value: unknown) => {
+                    const currentObs = paramValueComputed.get();
+                    if (currentObs instanceof Observable) {
+                      currentObs.set(value);
+                    } else if (currentObs instanceof Computed && (currentObs as Computed<unknown>).hasWriteFunction) {
+                      (currentObs as Computed<unknown>).set(value);
+                    }
+                  }
+                : undefined,
+            });
+            addDisposeCallback(elem, () => (result[paramName] as Computed<unknown>).dispose());
+          }
+        }
+      }
+    }
+
+    for (const [key, propName] of Object.entries(observableRefParams)) {
+      const dataContext = bindingContext.$data;
+      if (dataContext && typeof dataContext === 'object') {
+        const obs = getObservable(dataContext as object, propName);
+        if (obs) {
+          result[key] = obs;
+        } else {
+          result[key] = (dataContext as Record<string, unknown>)[propName];
+        }
       }
     }
 

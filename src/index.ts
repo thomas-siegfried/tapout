@@ -30,7 +30,10 @@ export type { ComputedOptions } from './computed.js';
 export { registerExtender, throttle, debounce } from './extenders.js';
 export type { ExtenderHandler, RateLimitOptions } from './extenders.js';
 
-export { reactive, reactiveArray, computed, getObservable } from './decorators.js';
+export { reactive, reactiveArray, computed, getObservable, replaceObservable } from './decorators.js';
+
+export { wireParams } from './wireParams.js';
+export type { WireParamsResult } from './wireParams.js';
 
 export {
   unwrapObservable, peekObservable, toJS, toJSON, when,
@@ -144,6 +147,10 @@ export type { ComponentDefinition, ComponentConfig, ComponentLoader, ComponentIn
 
 export { getComponentNameForNode, addBindingsForCustomElement } from './componentBinding.js';
 
+export { component, getComponentTag } from './componentDecorator.js';
+export type { ComponentOptions } from './componentDecorator.js';
+export type { ViewModelFactory } from './options.js';
+
 export {
   parseInterpolationMarkup,
   wrapExpression,
@@ -176,6 +183,7 @@ import './bindings.js';
 import './templateRendering.js';
 import './controlFlowBindings.js';
 import './componentBinding.js';
+import './slotBinding.js';
 
 import { Observable } from './observable.js';
 import { Computed } from './computed.js';

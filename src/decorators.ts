@@ -46,7 +46,7 @@ function lookupObservable(instance: object, key: string | symbol): AnySubscribab
 type AccessorDecorator = (value: AnyAccessorValue, context: AnyAccessorContext) => AnyAccessorResult;
 
 function createReactiveDecorator(extenders?: ExtenderOptions): AccessorDecorator {
-  return (value: AnyAccessorValue, context: AnyAccessorContext): AnyAccessorResult => ({
+  return (_value: AnyAccessorValue, context: AnyAccessorContext): AnyAccessorResult => ({
     init(initialValue: unknown): unknown {
       const obs = new Observable(initialValue);
       if (extenders) {
@@ -56,11 +56,11 @@ function createReactiveDecorator(extenders?: ExtenderOptions): AccessorDecorator
       return obs;
     },
     get(this: object): unknown {
-      const obs = value.get.call(this) as Observable<unknown>;
+      const obs = lookupObservable(this, context.name) as Observable<unknown>;
       return obs.get();
     },
     set(this: object, newValue: unknown): void {
-      const obs = value.get.call(this) as Observable<unknown>;
+      const obs = lookupObservable(this, context.name) as Observable<unknown>;
       obs.set(newValue);
     },
   });
@@ -81,7 +81,7 @@ export function reactive(
 // --- @reactiveArray ---
 
 function createReactiveArrayDecorator(extenders?: ExtenderOptions): AccessorDecorator {
-  return (value: AnyAccessorValue, context: AnyAccessorContext): AnyAccessorResult => ({
+  return (_value: AnyAccessorValue, context: AnyAccessorContext): AnyAccessorResult => ({
     init(initialValue: unknown): unknown {
       const arr = Array.isArray(initialValue) ? initialValue : [];
       const obs = new ObservableArray(arr);
@@ -92,12 +92,12 @@ function createReactiveArrayDecorator(extenders?: ExtenderOptions): AccessorDeco
       return obs;
     },
     get(this: object): unknown {
-      const obs = value.get.call(this) as ObservableArray<unknown>;
+      const obs = lookupObservable(this, context.name) as ObservableArray<unknown>;
       registerDependency(obs);
       return obs;
     },
     set(this: object, newValue: unknown): void {
-      const obs = value.get.call(this) as ObservableArray<unknown>;
+      const obs = lookupObservable(this, context.name) as ObservableArray<unknown>;
       obs.set(newValue as unknown[]);
     },
   });
@@ -185,8 +185,12 @@ export function computed<This, Value>(
   }
 }
 
-// --- getObservable() ---
+// --- getObservable() / replaceObservable() ---
 
 export function getObservable(target: object, key: string | symbol): AnySubscribable | undefined {
   return lookupObservable(target, key);
+}
+
+export function replaceObservable(instance: object, key: string | symbol, obs: AnySubscribable): void {
+  storeObservable(instance, key, obs);
 }
