@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reactivity E2E</title>
+</head>
+<body>
+  <div id="app">
+    <span id="name-display" data-bind="text: name"></span>
+    <span id="greeting" data-bind="text: greeting"></span>
+    <span id="counter-display" data-bind="text: count"></span>
+    <button id="increment-btn" data-bind="click: increment">Increment</button>
+    <button id="set-name-btn" data-bind="click: setName">Set Name</button>
+    <span id="visible-section" data-bind="visible: isVisible">Visible content</span>
+    <span id="hidden-section" data-bind="hidden: isVisible">Hidden content</span>
+  </div>
+
+  <script type="module">
+    import {
+      Observable, Computed, applyBindings,
+    } from '/dist/index.js';
+
+    const name = new Observable('World');
+    const count = new Observable(0);
+    const isVisible = new Observable(true);
+
+    const greeting = new Computed(() => 'Hello, ' + name.get() + '!');
+
+    const vm = {
+      name,
+      count,
+      greeting,
+      isVisible,
+      increment() { count.set(count.get() + 1); },
+      setName() { name.set('Tapout'); },
+    };
+
+    applyBindings(vm, document.getElementById('app'));
+  </script>
+</body>
+</html>

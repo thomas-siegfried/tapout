@@ -30,6 +30,8 @@ export type { ComputedOptions } from './computed.js';
 export { registerExtender, throttle, debounce } from './extenders.js';
 export type { ExtenderHandler, RateLimitOptions } from './extenders.js';
 
+export { reactive, reactiveArray, computed, getObservable } from './decorators.js';
+
 export {
   unwrapObservable, peekObservable, toJS, toJSON, when,
   cloneNodes,

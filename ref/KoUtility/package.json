@@ -1,0 +1,78 @@
+{
+  "name": "@twodtwenty/koutility",
+  "version": "1.0.8",
+  "publishConfig": {
+    "registry": "https://tsiegfried.pkgs.visualstudio.com/_packaging/twodtwenty/npm/registry/"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "build:clean": "rimraf dist && tsc --project tsconfig.build.json",
+    "build:watch": "tsc --watch --project tsconfig.build.json",
+    "test": "tsx ./node_modules/jasmine/bin/jasmine",
+    "type-check": "tsc --project tsconfig.build.json --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://tsiegfried.visualstudio.com/KoMagic/_git/KoUtility"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./arrays": {
+      "types": "./dist/arrays.d.ts",
+      "import": "./dist/arrays.js"
+    },
+    "./ko": {
+      "types": "./dist/ko/index.d.ts",
+      "import": "./dist/ko/index.js"
+    },
+    "./ko/*": {
+      "types": "./dist/ko/*.d.ts",
+      "import": "./dist/ko/*.js"
+    },
+    "./bind": {
+      "types": "./dist/bind.d.ts",
+      "import": "./dist/bind.js"
+    },
+    "./keypress": {
+      "types": "./dist/key.press.d.ts",
+      "import": "./dist/key.press.js"
+    },
+    "./effects": {
+      "types": "./dist/ko/effects.d.ts",
+      "import": "./dist/ko/effects.js"
+    },
+    "./component": {
+      "types": "./dist/ko/component.d.ts",
+      "import": "./dist/ko/component.js"
+    },
+    "./modal": {
+      "types": "./dist/ko/modal.d.ts",
+      "import": "./dist/ko/modal.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "peerDependencies": {
+    "@thomas-siegfried/jsi": "^2.0.0",
+    "knockout": "^3.5.1"
+  },
+  "devDependencies": {
+    "@types/jasmine": "^5.1.8",
+    "@types/knockout": "^3.4.77",
+    "@types/node": "^20.19.10",
+    "jasmine": "^5.9.0",
+    "rimraf": "^5.0.10",
+    "tsx": "^4.20.3"
+  }
+}

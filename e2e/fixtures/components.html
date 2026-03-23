@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Components E2E</title>
+</head>
+<body>
+  <div id="app">
+    <greeting-widget params="name: personName"></greeting-widget>
+    <div id="inline-component" data-bind="component: { name: 'info-panel', params: { title: panelTitle } }"></div>
+  </div>
+
+  <script type="module">
+    import { Observable, components, applyBindings } from '/dist/index.js';
+
+    components.register('greeting-widget', {
+      template: '<div class="greeting"><span data-bind="text: message"></span></div>',
+      viewModel: function(params) {
+        this.message = 'Welcome, ' + params.name.get() + '!';
+      },
+      synchronous: true,
+    });
+
+    components.register('info-panel', {
+      template: '<div class="panel"><h3 data-bind="text: title"></h3><p>Panel body</p></div>',
+      viewModel: function(params) {
+        this.title = params.title;
+      },
+      synchronous: true,
+    });
+
+    const vm = {
+      personName: new Observable('Tapout User'),
+      panelTitle: new Observable('Dashboard'),
+    };
+
+    applyBindings(vm, document.getElementById('app'));
+  </script>
+</body>
+</html>

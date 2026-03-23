@@ -10,6 +10,11 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
   },
+  webServer: {
+    command: 'npm run build && node --import tsx/esm e2e/server.ts',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+  },
   projects: [
     {
       name: 'chrome',

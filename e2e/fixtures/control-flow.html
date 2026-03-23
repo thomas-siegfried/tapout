@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Control Flow E2E</title>
+</head>
+<body>
+  <div id="app">
+    <button id="toggle-btn" data-bind="click: toggle">Toggle</button>
+    <div id="if-section" data-bind="if: showSection">
+      <span id="if-content">Conditional content</span>
+    </div>
+
+    <ul id="list" data-bind="foreach: items">
+      <li class="list-item" data-bind="text: $data"></li>
+    </ul>
+
+    <button id="add-btn" data-bind="click: addItem">Add Item</button>
+    <button id="remove-btn" data-bind="click: removeItem">Remove Item</button>
+    <span id="item-count" data-bind="text: itemCount"></span>
+
+    <div id="with-section" data-bind="with: selectedPerson">
+      <span id="person-name" data-bind="text: name"></span>
+      <span id="person-age" data-bind="text: age"></span>
+    </div>
+  </div>
+
+  <script type="module">
+    import { Observable, ObservableArray, Computed, applyBindings } from '/dist/index.js';
+
+    const showSection = new Observable(true);
+    const items = new ObservableArray(['Apple', 'Banana', 'Cherry']);
+    const selectedPerson = new Observable({ name: 'Alice', age: 30 });
+
+    let counter = 0;
+    const itemCount = new Computed(() => String(items.get().length));
+
+    const vm = {
+      showSection,
+      items,
+      itemCount,
+      selectedPerson,
+      toggle() { showSection.set(!showSection.get()); },
+      addItem() { items.push('Item ' + (++counter)); },
+      removeItem() { items.pop(); },
+    };
+
+    applyBindings(vm, document.getElementById('app'));
+  </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Forms E2E</title>
+</head>
+<body>
+  <div id="app">
+    <input id="text-input" type="text" data-bind="textInput: message" />
+    <span id="text-mirror" data-bind="text: message"></span>
+
+    <input id="value-input" type="text" data-bind="value: username" />
+    <span id="value-mirror" data-bind="text: username"></span>
+
+    <input id="checkbox" type="checkbox" data-bind="checked: isChecked" />
+    <span id="check-status" data-bind="text: checkLabel"></span>
+
+    <select id="selector" data-bind="value: selectedColor">
+      <option value="red">Red</option>
+      <option value="green">Green</option>
+      <option value="blue">Blue</option>
+    </select>
+    <span id="color-display" data-bind="text: selectedColor"></span>
+  </div>
+
+  <script type="module">
+    import { Observable, Computed, applyBindings } from '/dist/index.js';
+
+    const message = new Observable('');
+    const username = new Observable('');
+    const isChecked = new Observable(false);
+    const selectedColor = new Observable('red');
+
+    const checkLabel = new Computed(() => isChecked.get() ? 'ON' : 'OFF');
+
+    const vm = { message, username, isChecked, checkLabel, selectedColor };
+    applyBindings(vm, document.getElementById('app'));
+  </script>
+</body>
+</html>

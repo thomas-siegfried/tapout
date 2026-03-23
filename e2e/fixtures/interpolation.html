@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interpolation E2E</title>
+</head>
+<body>
+  <div id="app">
+    <span id="text-interp">Hello, {{name}}!</span>
+    <span id="computed-interp">Count: {{count}}</span>
+    <a id="attr-interp" href="/user/{{userId}}">Profile</a>
+    <span id="filter-upper" data-bind="text: name | uppercase">not set</span>
+    <span id="filter-lower" data-bind="text: name | lowercase">not set</span>
+    <button id="update-btn" data-bind="click: updateName">Update</button>
+  </div>
+
+  <script type="module">
+    import {
+      Observable, applyBindings,
+      enableInterpolationMarkup,
+      enableAttributeInterpolationMarkup,
+      enableNamespacedBindings,
+      enableTextFilter,
+    } from '/dist/index.js';
+
+    enableNamespacedBindings();
+    enableInterpolationMarkup();
+    enableAttributeInterpolationMarkup();
+    enableTextFilter('text');
+
+    const name = new Observable('World');
+    const count = new Observable(42);
+    const userId = new Observable('abc123');
+
+    const vm = {
+      name,
+      count,
+      userId,
+      updateName() { name.set('Tapout'); },
+    };
+
+    applyBindings(vm, document.getElementById('app'));
+  </script>
+</body>
+</html>

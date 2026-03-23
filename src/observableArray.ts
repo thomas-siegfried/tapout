@@ -289,6 +289,10 @@ export class ObservableArray<T> extends Observable<T[]> {
 
   // --- Readers ---
 
+  get length(): number {
+    return this.get().length;
+  }
+
   indexOf(item: T): number {
     return this.get().indexOf(item);
   }
@@ -304,6 +308,80 @@ export class ObservableArray<T> extends Observable<T[]> {
 
   reversed(): T[] {
     return this.get().slice(0).reverse();
+  }
+
+  map<U>(callbackfn: (value: T, index: number, array: T[]) => U, thisArg?: unknown): U[] {
+    return this.get().map(callbackfn, thisArg);
+  }
+
+  filter(predicate: (value: T, index: number, array: T[]) => unknown, thisArg?: unknown): T[] {
+    return this.get().filter(predicate as (value: T, index: number, array: T[]) => boolean, thisArg);
+  }
+
+  find(predicate: (value: T, index: number, array: T[]) => unknown, thisArg?: unknown): T | undefined {
+    return this.get().find(predicate as (value: T, index: number, array: T[]) => boolean, thisArg);
+  }
+
+  findIndex(predicate: (value: T, index: number, array: T[]) => unknown, thisArg?: unknown): number {
+    return this.get().findIndex(predicate as (value: T, index: number, array: T[]) => boolean, thisArg);
+  }
+
+  some(predicate: (value: T, index: number, array: T[]) => unknown, thisArg?: unknown): boolean {
+    return this.get().some(predicate as (value: T, index: number, array: T[]) => boolean, thisArg);
+  }
+
+  every(predicate: (value: T, index: number, array: T[]) => unknown, thisArg?: unknown): boolean {
+    return this.get().every(predicate as (value: T, index: number, array: T[]) => boolean, thisArg);
+  }
+
+  forEach(callbackfn: (value: T, index: number, array: T[]) => void, thisArg?: unknown): void {
+    this.get().forEach(callbackfn, thisArg);
+  }
+
+  reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: T[]) => U, initialValue: U): U;
+  reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: T[]) => T): T;
+  reduce<U>(callbackfn: (previousValue: U | T, currentValue: T, currentIndex: number, array: T[]) => U | T, ...args: unknown[]): U | T {
+    const arr = this.get();
+    if (args.length > 0) {
+      return arr.reduce(callbackfn as (pv: U | T, cv: T, ci: number, a: T[]) => U | T, args[0] as U | T);
+    }
+    return arr.reduce(callbackfn as (pv: T, cv: T, ci: number, a: T[]) => T);
+  }
+
+  includes(searchElement: T, fromIndex?: number): boolean {
+    return this.get().includes(searchElement, fromIndex);
+  }
+
+  at(index: number): T | undefined {
+    return this.get().at(index);
+  }
+
+  join(separator?: string): string {
+    return this.get().join(separator);
+  }
+
+  flat<D extends number = 1>(depth?: D): FlatArray<T[], D>[] {
+    return this.get().flat(depth) as FlatArray<T[], D>[];
+  }
+
+  flatMap<U>(callback: (value: T, index: number, array: T[]) => U | readonly U[], thisArg?: unknown): U[] {
+    return this.get().flatMap(callback, thisArg);
+  }
+
+  entries(): ArrayIterator<[number, T]> {
+    return this.get().entries();
+  }
+
+  keys(): ArrayIterator<number> {
+    return this.get().keys();
+  }
+
+  values(): ArrayIterator<T> {
+    return this.get().values();
+  }
+
+  [Symbol.iterator](): ArrayIterator<T> {
+    return this.get()[Symbol.iterator]();
   }
 }
 
