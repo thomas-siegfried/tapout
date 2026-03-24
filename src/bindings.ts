@@ -1,4 +1,5 @@
-import { unwrapObservable, parseHtmlFragment } from './utils.js';
+import { unwrapObservable } from './utils.js';
+import { parseHtmlFragment } from './utilsDom.js';
 import { bindingHandlers } from './bindingProvider.js';
 import type { BindingHandler, AllBindingsAccessor } from './bindingProvider.js';
 import { allowedVirtualElementBindings, virtualFirstChild, virtualNextSibling, virtualSetChildren, virtualEmptyNode } from './virtualElements.js';

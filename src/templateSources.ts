@@ -1,5 +1,5 @@
 import { domDataGet, domDataSet, domDataNextKey } from './domData.js';
-import { parseHtmlFragment } from './utils.js';
+import { parseHtmlFragment } from './utilsDom.js';
 
 const enum TemplateType {
   Script = 1,

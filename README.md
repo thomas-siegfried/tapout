@@ -54,6 +54,25 @@ npm install tapout
 
 Tapout is ESM-only and requires a modern bundler or runtime that supports ES modules.
 
+### Entry Points
+
+Tapout provides two entry points for tree shaking:
+
+```typescript
+// Full library — reactivity + DOM bindings + templates + components
+import { Observable, applyBindings, renderTemplate } from 'tapout';
+
+// Core only — reactivity primitives, no DOM dependencies
+import { Observable, Computed, Event, effect } from 'tapout/core';
+```
+
+| Entry Point | Includes |
+| --- | --- |
+| `tapout` | Everything: core reactivity, DOM bindings, templates, components, side-effect registrations |
+| `tapout/core` | Observables, computed, subscriptions, events, effects, extenders, decorators, disposable, task scheduler, pure utilities |
+
+Use `tapout/core` when you only need the reactive data layer — for example, in a Node.js backend, a shared library, or a project with its own rendering layer.
+
 ## Quick Start
 
 ```typescript

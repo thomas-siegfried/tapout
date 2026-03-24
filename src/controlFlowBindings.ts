@@ -15,7 +15,8 @@ import {
   virtualEmptyNode,
   virtualSetChildren,
 } from './virtualElements.js';
-import { unwrapObservable, cloneNodes } from './utils.js';
+import { unwrapObservable } from './utils.js';
+import { cloneNodes } from './utilsDom.js';
 
 // ---- if / ifnot / with ----
 

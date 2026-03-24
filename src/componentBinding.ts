@@ -12,7 +12,8 @@ import {
   virtualSetChildren,
   allowedVirtualElementBindings,
 } from './virtualElements.js';
-import { cloneNodes, unwrapObservable } from './utils.js';
+import { unwrapObservable } from './utils.js';
+import { cloneNodes } from './utilsDom.js';
 import { isReadableSubscribable } from './subscribable.js';
 import { Observable } from './observable.js';
 import { parseObjectLiteral } from './expressionRewriting.js';

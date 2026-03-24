@@ -7,7 +7,7 @@ import {
   virtualChildNodes,
   virtualSetChildren,
 } from './virtualElements.js';
-import { cloneNodes } from './utils.js';
+import { cloneNodes } from './utilsDom.js';
 
 const DEFAULT_SLOT = '';
 

@@ -1,7 +1,7 @@
 import { Subscribable } from './subscribable.js';
 import { schedule } from './tasks.js';
 import { ignore } from './dependencyDetection.js';
-import { parseHtmlFragment, cloneNodes } from './utils.js';
+import { parseHtmlFragment, cloneNodes } from './utilsDom.js';
 
 // ---- Types ----
 

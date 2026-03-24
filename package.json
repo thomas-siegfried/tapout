@@ -12,6 +12,13 @@
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
       }
+    },
+    "./core": {
+      "typescript": "./src/core.ts",
+      "import": {
+        "types": "./dist/core.d.ts",
+        "default": "./dist/core.js"
+      }
     }
   },
   "imports": {

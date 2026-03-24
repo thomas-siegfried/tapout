@@ -18,13 +18,13 @@ import { setDomNodeChildrenFromArrayMapping } from './arrayToDomMapping.js';
 import type { ArrayChange } from './compareArrays.js';
 import { unmemoizeDomNodeAndDescendants } from './memoization.js';
 import { ensureTemplateIsRewritten } from './templateRewriting.js';
+import { unwrapObservable } from './utils.js';
 import {
-  unwrapObservable,
   fixUpContinuousNodeArray,
   replaceDomNodes,
   moveCleanedNodesToContainerElement,
   domNodeIsAttachedToDocument,
-} from './utils.js';
+} from './utilsDom.js';
 
 function invokeForEachNodeInContinuousRange(
   firstNode: Node,

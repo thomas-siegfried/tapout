@@ -1,5 +1,5 @@
 import { DomElementSource, AnonymousSource } from './templateSources.js';
-import { parseHtmlFragment } from './utils.js';
+import { parseHtmlFragment } from './utilsDom.js';
 import type { BindingContext } from './bindingContext.js';
 
 export interface TemplateRenderOptions {

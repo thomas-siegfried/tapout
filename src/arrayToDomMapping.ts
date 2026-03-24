@@ -10,7 +10,7 @@ import {
   fixUpContinuousNodeArray,
   replaceDomNodes,
   anyDomNodeIsAttachedToDocument,
-} from './utils.js';
+} from './utilsDom.js';
 
 interface MappingResult<T> {
   arrayEntry: T;
