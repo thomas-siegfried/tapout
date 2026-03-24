@@ -30,6 +30,9 @@ export type { ComputedOptions } from './computed.js';
 export { registerExtender, throttle, debounce } from './extenders.js';
 export type { ExtenderHandler, ExtenderMap, ExtenderOptions, RateLimitOptions } from './extenders.js';
 
+export { effect, observe } from './effects.js';
+export type { EffectHandle } from './effects.js';
+
 export { reactive, reactiveArray, computed, getObservable, replaceObservable } from './decorators.js';
 
 export { wireParams } from './wireParams.js';

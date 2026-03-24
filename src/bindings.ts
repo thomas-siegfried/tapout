@@ -830,6 +830,40 @@ function isWritableObs(value: unknown): value is Observable<unknown> | Computed<
   return false;
 }
 
+// ---- enter: fires callback on Enter keypress ----
+
+const enterHandler: BindingHandler = {
+  init(element, valueAccessor) {
+    (element as HTMLElement).addEventListener('keydown', (evt: Event) => {
+      if ((evt as KeyboardEvent).key === 'Enter') {
+        const callback = valueAccessor();
+        if (typeof callback === 'function') {
+          callback.call(null, evt);
+        }
+      }
+    });
+  },
+};
+
+// ---- modal: toggles <dialog> showModal/close based on observable boolean ----
+
+const modalHandler: BindingHandler = {
+  init(element, valueAccessor) {
+    const dlg = element as HTMLDialogElement;
+    const value = unwrapObservable(valueAccessor());
+    if (value) dlg.showModal();
+  },
+  update(element, valueAccessor) {
+    const dlg = element as HTMLDialogElement;
+    const value = unwrapObservable(valueAccessor());
+    if (value) {
+      if (!dlg.open) dlg.showModal();
+    } else {
+      if (dlg.open) dlg.close();
+    }
+  },
+};
+
 // ---- Registration ----
 
 bindingHandlers['text'] = textHandler;
@@ -856,6 +890,8 @@ bindingHandlers['hasfocus'] = hasfocusHandler;
 bindingHandlers['hasFocus'] = hasfocusHandler;
 bindingHandlers['selectedOptions'] = selectedOptionsHandler;
 bindingHandlers['options'] = optionsHandler;
+bindingHandlers['enter'] = enterHandler;
+bindingHandlers['modal'] = modalHandler;
 
 twoWayBindings['value'] = true;
 twoWayBindings['textInput'] = true;
