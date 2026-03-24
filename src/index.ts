@@ -33,6 +33,12 @@ export type { ExtenderHandler, ExtenderMap, ExtenderOptions, RateLimitOptions } 
 export { effect, observe } from './effects.js';
 export type { EffectHandle } from './effects.js';
 
+export { Event, EventSubscribable, EventSubscription, AggregateEvent, isEvent, isEventSubscribable, isAggregateEvent } from './event.js';
+export type { EventCallback, Constructor } from './event.js';
+
+export { DisposableGroup } from './disposable.js';
+export type { Disposable } from './disposable.js';
+
 export { reactive, reactiveArray, computed, getObservable, replaceObservable } from './decorators.js';
 
 export { wireParams } from './wireParams.js';

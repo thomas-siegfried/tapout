@@ -15,6 +15,7 @@ Tapout provides dependency-tracked observables, computed values, declarative DOM
   - [PureComputed](#purecomputed)
   - [Effects](#effects)
   - [Subscriptions](#subscriptions)
+  - [Events](#events)
 - [Extenders](#extenders)
 - [Decorators](#decorators)
   - [@reactive](#reactive)
@@ -311,6 +312,132 @@ sub.disposeWhenNodeIsRemoved(someElement);
 ```
 
 The subscription is automatically disposed when the DOM node is cleaned or removed.
+
+### Events
+
+Events are stateless, hot signals — like observables that don't hold a value. They emit values on demand, and only active subscribers receive them.
+
+An `Event` has a **two-sided** design (similar to Deferred/Promise): the owner calls `emit()`, and consumers receive the read-only `subscribable` side.
+
+```typescript
+import { Event } from 'tapout';
+
+class SaveEvent {
+  constructor(public id: number, public success: boolean) {}
+}
+
+class MyService {
+  private _onSave = new Event<SaveEvent>();
+  readonly onSave = this._onSave.subscribable; // hand this out
+
+  save(id: number) {
+    // ... perform save ...
+    this._onSave.emit(new SaveEvent(id, true));
+  }
+}
+
+const service = new MyService();
+const sub = service.onSave.subscribe(e => {
+  console.log(`Saved item ${e.id}`);
+});
+
+service.save(42); // logs: Saved item 42
+sub.dispose();    // stop listening
+```
+
+**Type-filtered subscriptions** — use `.on(Type)` to subscribe to only matching event types via `instanceof`:
+
+```typescript
+class DeleteEvent {
+  constructor(public id: number) {}
+}
+
+const event = new Event<SaveEvent | DeleteEvent>();
+
+event.subscribable.on(SaveEvent).subscribe(e => {
+  console.log(`Save: ${e.id}`);   // only SaveEvent instances
+});
+
+event.subscribable.on(DeleteEvent).subscribe(e => {
+  console.log(`Delete: ${e.id}`); // only DeleteEvent instances
+});
+```
+
+**Aggregate events** — roll up multiple event sources into one, like DOM event bubbling through a tree:
+
+```typescript
+import { Event, AggregateEvent } from 'tapout';
+
+class ItemChangedEvent {
+  constructor(public itemId: number) {}
+}
+
+class GrandChild {
+  private _onChange = new Event<ItemChangedEvent>();
+  readonly events = new AggregateEvent<ItemChangedEvent>();
+
+  constructor() {
+    this.events.pipe(this._onChange.subscribable);
+  }
+
+  change(id: number) { this._onChange.emit(new ItemChangedEvent(id)); }
+}
+
+class Child {
+  private _onSave = new Event<SaveEvent>();
+  private _onDelete = new Event<DeleteEvent>();
+  readonly grandChild = new GrandChild();
+
+  // Roll up own events + grandchild's aggregate
+  readonly events = new AggregateEvent<SaveEvent | DeleteEvent | ItemChangedEvent>();
+
+  constructor() {
+    this.events.pipe(
+      this._onSave.subscribable,
+      this._onDelete.subscribable,
+      this.grandChild.events.subscribable,
+    );
+  }
+}
+
+const child = new Child();
+
+// Subscribe to everything in the tree
+child.events.subscribable.subscribe(e => {
+  console.log('Something happened:', e);
+});
+
+// Or filter to a specific type
+child.events.subscribable.on(SaveEvent).subscribe(e => {
+  console.log(`Save: ${e.id}`);
+});
+```
+
+`pipe()` accepts multiple sources in a single call and can be called again to add sources later. It returns an array of `EventSubscription` objects for individual disposal.
+
+Events are **hot** — no replay, no current value. If nobody is listening when `emit()` is called, the value is lost. Calling `dispose()` on an Event tears down all subscriptions (including piped sources on an `AggregateEvent`).
+
+**DisposableGroup** — a utility for centralized subscription cleanup. Works with both `Subscription` (from observables) and `EventSubscription` (from events):
+
+```typescript
+import { DisposableGroup, Observable, Event } from 'tapout';
+
+class MyComponent {
+  private _subs = new DisposableGroup();
+  readonly count = new Observable(0);
+
+  constructor(events: EventSubscribable<SaveEvent>) {
+    this._subs.add(events.subscribe(e => this.onSave(e)));
+    this._subs.add(this.count.subscribe(v => console.log('Count:', v)));
+  }
+
+  dispose() {
+    this._subs.dispose(); // cleans up all subscriptions at once
+  }
+}
+```
+
+`add()` returns the disposable, so you can still hold a reference for early individual disposal. Any items added after the group is already disposed are immediately disposed.
 
 ---
 
