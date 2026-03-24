@@ -84,3 +84,13 @@
 - [x] 47. Attribute interpolation markup (`{{ }}` inside HTML attributes, auto-converts to bindings)
 - [x] 48. Namespaced bindings (`attr.href`, `css.active`, `style.color`, `event.click` dot-syntax)
 - [x] 49. Filter/pipe syntax (`expression | filter1 | filter2:arg`) with built-in filters: `uppercase`, `lowercase`, `default`, `json`
+
+## Phase 12 — Events, Disposable, Entry Points
+
+- [x] 50. Event system (`Event`, `EventSubscribable`, `AggregateEvent`, `.on(Type)` filtering)
+- [x] 51. `DisposableGroup` (centralized subscription cleanup)
+- [x] 52. Split entry points (`tapout/core` for reactivity-only, `tapout` for everything)
+
+## Next — Local Integration Testing
+
+- [ ] 53. Use `npm link` to test the library in standalone projects locally before publishing. Unit tests pass, but we want to exercise real-world usage patterns and catch edge cases (import resolution, tree shaking with `tapout/core`, binding lifecycle in actual apps, etc.).

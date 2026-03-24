@@ -36,21 +36,20 @@ export class EventSubscription {
 }
 
 export class EventSubscribable<T = unknown> {
-  /** @internal */
-  _entries: SubscriptionEntry<T>[] = [];
-  private _isDisposed = false;
+  #entries: SubscriptionEntry<T>[] = [];
+  #isDisposed = false;
 
   subscribe(callback: EventCallback<T>): EventSubscription {
-    if (this._isDisposed) {
+    if (this.#isDisposed) {
       throw new Error('EventSubscribable is disposed');
     }
     const entry: SubscriptionEntry<T> = { callback, disposed: false };
-    this._entries.push(entry);
+    this.#entries.push(entry);
     return new EventSubscription(() => {
       entry.disposed = true;
-      const idx = this._entries.indexOf(entry);
+      const idx = this.#entries.indexOf(entry);
       if (idx !== -1) {
-        this._entries.splice(idx, 1);
+        this.#entries.splice(idx, 1);
       }
     });
   }
@@ -60,13 +59,13 @@ export class EventSubscribable<T = unknown> {
   }
 
   get subscriberCount(): number {
-    return this._entries.length;
+    return this.#entries.length;
   }
 
   /** @internal */
   _emit(value: T): void {
-    if (this._isDisposed) return;
-    const snapshot = this._entries.slice();
+    if (this.#isDisposed) return;
+    const snapshot = this.#entries.slice();
     for (let i = 0; i < snapshot.length; i++) {
       if (!snapshot[i].disposed) {
         snapshot[i].callback(value);
@@ -76,8 +75,8 @@ export class EventSubscribable<T = unknown> {
 
   /** @internal */
   _dispose(): void {
-    this._isDisposed = true;
-    this._entries.length = 0;
+    this.#isDisposed = true;
+    this.#entries.length = 0;
   }
 }
 
