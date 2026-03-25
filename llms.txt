@@ -1,0 +1,360 @@
+# Tapout
+
+> Tapout is a modern ESM reactivity and templating library, spiritually inspired by KnockoutJS. Same philosophy, modern implementation.
+
+## Guidance
+
+- Prefer `@reactive accessor` over `new Observable()` for class properties
+- Prefer `@reactiveArray accessor` over `new ObservableArray()` for array properties
+- Prefer `@computed` over `new Computed()` for derived values in classes
+- Prefer `@component` decorator over `components.register()` for component registration
+- Use `tapout/core` when you only need reactivity (no DOM)
+- Use `tapout` when you need DOM bindings, templates, and components
+- Always dispose subscriptions and effects when no longer needed
+- Use `DisposableGroup` for centralized cleanup
+- Use `PureComputed` (or `@computed`, which uses it) for intermittent UI values
+
+## Installation
+
+```bash
+npm install tapout
+```
+
+ESM-only. Two entry points:
+
+```typescript
+import { Observable, applyBindings } from 'tapout';       // full library
+import { Observable, Computed } from 'tapout/core';        // reactivity only, no DOM
+```
+
+## Quick Start (Preferred Style)
+
+```typescript
+import { reactive, computed, component, applyBindings } from 'tapout';
+
+@component('greeting-card', `
+  <p>First: <input data-bind="textInput: firstName" /></p>
+  <p>Last: <input data-bind="textInput: lastName" /></p>
+  <h2 data-bind="text: fullName"></h2>
+`)
+class GreetingCard {
+  @reactive accessor firstName = 'Jane';
+  @reactive accessor lastName = 'Doe';
+
+  @computed get fullName() {
+    return `${this.firstName} ${this.lastName}`;
+  }
+}
+
+applyBindings({}, document.body);
+```
+
+```html
+<greeting-card></greeting-card>
+```
+
+## Core Reactivity
+
+### Observable
+
+Mutable reactive value. Reading inside a computed or effect tracks the dependency.
+
+```typescript
+const count = new Observable(0);
+count.get();    // read (tracks dependency)
+count.peek();   // read without tracking
+count.set(5);   // write, notifies subscribers
+```
+
+Decorator equivalent (preferred in classes):
+
+```typescript
+class MyClass {
+  @reactive accessor count = 0;
+}
+// Reading: this.count (tracks), Writing: this.count = 5 (notifies)
+```
+
+Pass extender options: `@reactive({ deferred: true }) accessor query = '';`
+
+### ObservableArray
+
+Observable wrapping an array with mutation methods: `push`, `pop`, `shift`, `unshift`, `splice`, `sort`, `reverse`, `remove`, `removeAll`, `replace`.
+
+```typescript
+const items = new ObservableArray(['a', 'b']);
+items.push('c');
+items.remove('a');
+```
+
+Decorator equivalent (preferred in classes):
+
+```typescript
+class MyClass {
+  @reactiveArray accessor items: string[] = [];
+}
+```
+
+Subscribe to fine-grained diffs:
+
+```typescript
+items.subscribe(changes => { /* status, value, index */ }, 'arrayChange');
+```
+
+### Computed
+
+Derived value, re-evaluates when dependencies change.
+
+```typescript
+const area = new Computed(() => width.get() * height.get());
+```
+
+Writable computed:
+
+```typescript
+const full = new Computed({
+  read: () => `${first.get()} ${last.get()}`,
+  write: (v: string) => { [first, last] = v.split(' ').map(s => s); },
+});
+```
+
+Decorator equivalent (preferred in classes):
+
+```typescript
+class MyClass {
+  @reactive accessor first = 'John';
+  @reactive accessor last = 'Doe';
+
+  @computed get full() { return `${this.first} ${this.last}`; }
+  set full(v: string) { [this.first, this.last] = v.split(' '); }
+}
+```
+
+### PureComputed
+
+Memory-optimized computed that sleeps when it has no subscribers. `@computed` uses this internally.
+
+```typescript
+const label = new PureComputed(() => `Count: ${count.get()}`);
+```
+
+### Effects
+
+```typescript
+// Runs immediately, then on each dependency change
+const handle = effect(() => name.get(), val => console.log(val));
+
+// Runs only on subsequent changes (not immediately)
+const handle = observe(() => name.get(), val => console.log(val));
+
+handle.dispose(); // stop
+```
+
+### Subscriptions
+
+```typescript
+const sub = count.subscribe(value => console.log(value));
+sub.dispose();
+```
+
+Event channels: `'change'` (default), `'beforeChange'`, `'spectate'`, `'dirty'`, `'awake'`, `'asleep'`, `'arrayChange'`.
+
+### Events
+
+Stateless hot signals with owner/consumer separation:
+
+```typescript
+class MyService {
+  private _onSave = new Event<SaveEvent>();
+  readonly onSave = this._onSave.subscribable;
+
+  save(id: number) { this._onSave.emit(new SaveEvent(id, true)); }
+}
+```
+
+Type-filtered: `event.subscribable.on(SaveEvent).subscribe(...)`.
+Aggregate: `AggregateEvent` rolls up multiple event sources via `pipe()`.
+
+### DisposableGroup
+
+Centralized cleanup for subscriptions and event subscriptions:
+
+```typescript
+private _subs = new DisposableGroup();
+// this._subs.add(someSubscription);
+// this._subs.dispose(); // cleans up all at once
+```
+
+## Extenders
+
+```typescript
+obs.extend({ rateLimit: { timeout: 300, method: 'notifyWhenChangesStop' } });
+obs.extend({ rateLimit: 200 });      // throttle
+obs.extend({ notify: 'always' });    // always notify
+obs.extend({ deferred: true });      // microtask batching
+```
+
+## Decorators (Preferred API)
+
+| Decorator | Target | Backing |
+|---|---|---|
+| `@reactive` | `accessor` property | `Observable` |
+| `@reactiveArray` | `accessor` property | `ObservableArray` |
+| `@computed` | getter, getter+setter, method | `PureComputed` / writable `Computed` |
+| `@component(tag, template)` | class | registers component |
+
+Access underlying observable: `getObservable(instance, 'propName')`.
+Replace underlying observable: `replaceObservable(instance, 'propName', newObs)`.
+
+## Components
+
+### Registration (decorator preferred)
+
+```typescript
+@component('user-card', '<div><span data-bind="text: name"></span></div>')
+class UserCard {
+  @reactive accessor name = '';
+}
+```
+
+Or with options:
+
+```typescript
+@component({ tag: 'user-card', template: '...', synchronous: true })
+class UserCard { ... }
+```
+
+Manual registration (use decorator instead when possible):
+
+```typescript
+components.register('user-card', { template: '...', viewModel: UserCard });
+```
+
+### Usage
+
+```html
+<user-card params="name: userName"></user-card>
+```
+
+### Params and Wiring
+
+- Plain values assigned directly
+- Computed params create one-way subscription
+- `$`-prefixed observable params enable two-way binding
+
+```html
+<user-card params="name: $sharedName"></user-card>
+```
+
+### Lifecycle
+
+```typescript
+onInit()                        // after creation and param wiring
+onDescendantsComplete(node)     // after DOM is ready
+dispose()                       // on cleanup
+```
+
+### Slots
+
+```html
+<!-- Component template -->
+<div data-bind="slot: 'header'">Default</div>
+<div data-bind="slot: ''">Default body</div>
+
+<!-- Usage -->
+<my-card>
+  <h2 slot="header">Custom Title</h2>
+  <p>Body content</p>
+</my-card>
+```
+
+## Binding System
+
+Apply bindings: `applyBindings(vm, rootElement)`.
+
+### Context
+
+`$data`, `$root`, `$parent`, `$parents`, `$index`, `$component`, `$parentContext`, `$rawData`, `$componentTemplateNodes`.
+
+Inspect: `contextFor(element)`, `dataFor(element)`.
+
+### Built-in Bindings
+
+**Display:** `text`, `html`, `visible`, `hidden`.
+**Attributes:** `attr: { href: url }`, `css: { active: isActive }`, `class: className`, `style: { color: c }`.
+**Form state:** `enable`, `disable`, `uniqueName`.
+**Events:** `event: { mouseover: fn }`, `click`, `submit`, `enter`. Return `true` for default behavior. Use `clickBubble: false` to stop bubbling.
+**Two-way:** `value`, `textInput`, `checked`, `checkedValue`, `hasFocus`, `selectedOptions`, `options`.
+**Control flow:** `if`, `ifnot`, `with`, `using`, `let`, `foreach`, `template`.
+**Dialog:** `modal`.
+
+### Virtual Elements
+
+```html
+<!-- tap if: showSection -->
+  <p>Content</p>
+<!-- /tap -->
+
+<!-- tap foreach: items -->
+  <span data-bind="text: $data"></span>
+<!-- /tap -->
+```
+
+### Interpolation Markup
+
+Enable with `enableInterpolationMarkup()`:
+
+```html
+<span>Hello, {{ name }}!</span>
+<div>{{{ richHtml }}}</div>
+{{# if isLoggedIn }}<p>Welcome!</p>{{/ if }}
+```
+
+### Attribute Interpolation
+
+Enable with `enableAttributeInterpolationMarkup()`:
+
+```html
+<a href="{{ baseUrl }}/profile/{{ userId }}">Profile</a>
+```
+
+### Namespaced Bindings
+
+Enable with `enableNamespacedBindings()`:
+
+```html
+<a data-bind="attr.href: url, css.active: isActive">Link</a>
+```
+
+### Filters
+
+Enable with `enableTextFilter('text')`:
+
+```html
+<span data-bind="text: name | uppercase"></span>
+<span data-bind="text: bio | default:'None'"></span>
+```
+
+Built-in: `uppercase`, `lowercase`, `default`, `json`. Custom: `filters['myFilter'] = (val, ...args) => result`.
+
+## Utilities
+
+- `toJS(obj)` — deep-unwrap observables to plain JS
+- `toJSON(obj)` — JSON string of unwrapped object
+- `when(() => condition, callback)` — one-shot reactive wait (or returns Promise if no callback)
+- `unwrapObservable(val)` — recursively unwrap
+- `cleanNode(el)`, `removeNode(el)`, `addDisposeCallback(el, fn)` — DOM cleanup
+
+## Configuration
+
+```typescript
+import { options } from 'tapout';
+options.deferUpdates = true;                    // global microtask batching
+options.onError = (err) => { ... };             // global error handler
+options.viewModelFactory = (ctor) => new ctor(); // DI hook
+options.customElementDisplayContents = true;     // display: contents on custom elements
+```
+
+## Type Guards
+
+`isObservable(v)`, `isObservableArray(v)`, `isComputed(v)`, `isPureComputed(v)`.
