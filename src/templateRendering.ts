@@ -360,7 +360,7 @@ const templateHandler: BindingHandler = {
       template = value;
       options = {};
     } else {
-      template = 'name' in options ? options.name : element;
+      template = 'name' in options ? unwrapObservable(options.name) : element;
 
       if ('if' in options)
         shouldDisplay = !!unwrapObservable(options['if']);
