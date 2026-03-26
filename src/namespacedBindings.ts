@@ -8,6 +8,7 @@ import type { BindingHandler, PreprocessFn } from './bindingProvider.js';
 import { allowedVirtualElementBindings } from './virtualElements.js';
 import { parseObjectLiteral } from './expressionRewriting.js';
 import type { BindingContext } from './bindingContext.js';
+import { options } from './options.js';
 import type { AllBindingsAccessor } from './expressionRewriting.js';
 
 const NAMESPACE_DIVIDER = '.';
@@ -73,6 +74,7 @@ export function defaultGetNamespacedHandler(
 // this splits on `.`, finds the `attr` handler, and creates a derived handler
 // that wraps the single value into the object map format the namespace handler expects.
 export function enableNamespacedBindings(): void {
+  options.namespacedBindings = true;
   addBindingHandlerCreator(NAMESPACED_BINDING_REGEX, (match, bindingKey) => {
     const namespace = match[1];
     const namespaceHandler = bindingHandlers[namespace];

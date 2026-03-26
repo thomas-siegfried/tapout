@@ -682,18 +682,62 @@ const data = dataFor(someElement);   // $data
 #### Events
 
 
-| Binding  | Example                                     | Description                            |
-| -------- | ------------------------------------------- | -------------------------------------- |
-| `event`  | `data-bind="event: { mouseover: onHover }"` | Binds one or more event handlers       |
-| `click`  | `data-bind="click: onClick"`                | Shorthand for click events             |
-| `submit` | `data-bind="submit: onSubmit"`              | Form submit handler (prevents default) |
-| `enter`  | `data-bind="enter: onEnter"`                | Fires callback on Enter key            |
+| Binding    | Example                                     | Description                            |
+| ---------- | ------------------------------------------- | -------------------------------------- |
+| `event`    | `data-bind="event: { mouseover: onHover }"` | Binds one or more event handlers       |
+| `click`    | `data-bind="click: onClick"`                | Shorthand for click events             |
+| `submit`   | `data-bind="submit: onSubmit"`              | Form submit handler (prevents default) |
+| `keydown`  | `data-bind="keydown.enter: onEnter"`        | Key-filtered keydown (see below)       |
+| `keyup`    | `data-bind="keyup.space: onSpace"`          | Key-filtered keyup (see below)         |
+| `enter`    | `data-bind="enter: onEnter"`                | Shorthand for `keydown.enter`          |
 
 
 Event handlers receive `$data` as the first argument and the DOM event as the second. Return `true` from a handler to allow default browser behavior. Control bubbling with `eventNameBubble: false`:
 
 ```html
 <button data-bind="click: onClick, clickBubble: false">Click</button>
+```
+
+##### Key Event Bindings
+
+The `keydown` and `keyup` bindings use the namespaced binding system to filter by key and modifier. The part after the first dot is the key name, and additional dots add modifier requirements:
+
+```html
+<!-- Single key -->
+<input data-bind="keydown.enter: handleEnter">
+<input data-bind="keydown.esc: handleEsc">
+<input data-bind="keyup.tab: handleTab">
+
+<!-- Key + modifiers -->
+<input data-bind="keydown.enter.ctrl: handleCtrlEnter">
+<input data-bind="keydown.s.ctrl: handleSave">
+<input data-bind="keydown.enter.ctrl.shift: handleCtrlShiftEnter">
+
+<!-- Plain (no filter, fires on any keydown) -->
+<input data-bind="keydown: handleAnyKey">
+```
+
+**Key aliases** — use these shorthand names or any raw `KeyboardEvent.key` value (e.g. `a`, `s`, `F1`):
+
+| Alias       | `KeyboardEvent.key` |
+| ----------- | -------------------- |
+| `enter`     | `Enter`              |
+| `tab`       | `Tab`                |
+| `esc`       | `Escape`             |
+| `escape`    | `Escape`             |
+| `space`     | ` ` (space)          |
+| `delete`    | `Delete`             |
+| `backspace` | `Backspace`          |
+| `up`        | `ArrowUp`            |
+| `down`      | `ArrowDown`          |
+| `left`      | `ArrowLeft`          |
+| `right`     | `ArrowRight`         |
+
+**Modifiers** — append any combination of `ctrl`, `alt`, `shift`, `meta`:
+
+```html
+<input data-bind="keydown.enter.alt: onAltEnter">
+<input data-bind="keydown.s.ctrl.shift: onCtrlShiftS">
 ```
 
 #### Form Values (Two-Way)
@@ -785,9 +829,40 @@ Use HTML comments for bindings that don't need a wrapper element:
 
 The following bindings support virtual elements: `text`, `html`, `if`, `ifnot`, `with`, `let`, `using`, `foreach`, `template`, `component`, `slot`.
 
+### Configuration
+
+Tapout has several opt-in features that enhance the binding system. Enable them declaratively via `options`, or all at once with `enableAll()`:
+
+```typescript
+import { options } from 'tapout';
+
+options.interpolation = true;          // {{ }} text interpolation
+options.attributeInterpolation = true; // {{ }} inside HTML attributes
+options.namespacedBindings = true;     // Dot-notation: attr.href, keydown.enter
+options.filters = true;                // Pipe filters on all bindings
+```
+
+Features are activated automatically on the first `applyBindings` call. Or enable everything at once:
+
+```typescript
+import { enableAll } from 'tapout';
+enableAll();
+```
+
+The individual enable functions (`enableInterpolationMarkup`, `enableNamespacedBindings`, etc.) still work for granular control.
+
+The `options` object also includes runtime settings:
+
+| Option                       | Default             | Description                                      |
+| ---------------------------- | ------------------- | ------------------------------------------------ |
+| `deferUpdates`               | `false`             | Batch writes into microtask notifications         |
+| `onError`                    | `null`              | Global error handler for bindings/computeds       |
+| `viewModelFactory`           | `(ctor) => new ctor()` | Factory for component view model instantiation |
+| `customElementDisplayContents` | `true`            | Custom elements use `display: contents`          |
+
 ### Interpolation Markup
 
-Enable text interpolation for a more template-like syntax:
+Enable text interpolation for a more template-like syntax (or set `options.interpolation = true`):
 
 ```typescript
 import { enableInterpolationMarkup } from 'tapout';
@@ -810,7 +885,7 @@ Then use `{{ }}` in your HTML:
 
 ### Attribute Interpolation
 
-Enable interpolation inside HTML attributes:
+Enable interpolation inside HTML attributes (or set `options.attributeInterpolation = true`):
 
 ```typescript
 import { enableAttributeInterpolationMarkup } from 'tapout';
@@ -824,7 +899,7 @@ enableAttributeInterpolationMarkup();
 
 ### Namespaced Bindings
 
-Enable shorthand dot-notation for attribute-like bindings:
+Enable shorthand dot-notation for attribute-like bindings (or set `options.namespacedBindings = true`):
 
 ```typescript
 import { enableNamespacedBindings } from 'tapout';
@@ -838,7 +913,7 @@ enableNamespacedBindings();
 
 ### Filters
 
-Add pipe-style filters to binding values:
+Add pipe-style filters to binding values. Set `options.filters = true` to enable on all bindings, or use `enableTextFilter` for specific ones:
 
 ```typescript
 import { enableTextFilter } from 'tapout';

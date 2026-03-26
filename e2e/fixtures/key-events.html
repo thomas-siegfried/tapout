@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Key Events E2E</title>
+</head>
+<body>
+  <div id="app">
+    <input id="enter-input" data-bind="keydown.enter: onEnter" />
+    <span id="enter-count" data-bind="text: enterCount"></span>
+
+    <input id="esc-input" data-bind="keydown.esc: onEsc" />
+    <span id="esc-count" data-bind="text: escCount"></span>
+
+    <input id="ctrl-enter-input" data-bind="keydown.enter.ctrl: onCtrlEnter" />
+    <span id="ctrl-enter-count" data-bind="text: ctrlEnterCount"></span>
+
+    <input id="legacy-enter-input" data-bind="enter: onLegacyEnter" />
+    <span id="legacy-enter-count" data-bind="text: legacyEnterCount"></span>
+
+    <input id="keyup-space-input" data-bind="keyup.space: onKeyupSpace" />
+    <span id="keyup-space-count" data-bind="text: keyupSpaceCount"></span>
+
+    <input id="last-key-input" data-bind="keydown: onAnyKey" />
+    <span id="last-key" data-bind="text: lastKey"></span>
+  </div>
+
+  <script type="module">
+    import {
+      Observable, Computed, applyBindings, enableNamespacedBindings,
+    } from '/dist/index.js';
+
+    enableNamespacedBindings();
+
+    const enterCount = new Observable(0);
+    const escCount = new Observable(0);
+    const ctrlEnterCount = new Observable(0);
+    const legacyEnterCount = new Observable(0);
+    const keyupSpaceCount = new Observable(0);
+    const lastKey = new Observable('');
+
+    const vm = {
+      enterCount,
+      escCount,
+      ctrlEnterCount,
+      legacyEnterCount,
+      keyupSpaceCount,
+      lastKey,
+      onEnter() { enterCount.set(enterCount.get() + 1); },
+      onEsc() { escCount.set(escCount.get() + 1); },
+      onCtrlEnter() { ctrlEnterCount.set(ctrlEnterCount.get() + 1); },
+      onLegacyEnter() { legacyEnterCount.set(legacyEnterCount.get() + 1); },
+      onKeyupSpace() { keyupSpaceCount.set(keyupSpaceCount.get() + 1); },
+      onAnyKey(_data, event) { lastKey.set(event.key); },
+    };
+
+    applyBindings(vm, document.getElementById('app'));
+  </script>
+</body>
+</html>

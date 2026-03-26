@@ -141,6 +141,8 @@ export {
   enableTextFilter,
 } from './filters.js';
 
+export { enableAll, resetConfigured } from './configure.js';
+
 import './bindings.js';
 import './templateRendering.js';
 import './controlFlowBindings.js';

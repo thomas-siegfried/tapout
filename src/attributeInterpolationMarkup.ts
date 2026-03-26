@@ -1,5 +1,6 @@
 import { addNodePreprocessor, getBindingHandler } from './bindingProvider.js';
 import type { NodePreprocessFn } from './bindingProvider.js';
+import { options } from './options.js';
 import { parseInterpolationMarkup } from './interpolationMarkup.js';
 
 const DATA_BIND_ATTR = 'data-bind';
@@ -85,5 +86,6 @@ export const attributeInterpolationMarkupPreprocessor: NodePreprocessFn = functi
 };
 
 export function enableAttributeInterpolationMarkup(): void {
+  options.attributeInterpolation = true;
   addNodePreprocessor(attributeInterpolationMarkupPreprocessor);
 }

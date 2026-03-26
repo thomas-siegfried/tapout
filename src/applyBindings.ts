@@ -13,6 +13,7 @@ import {
 } from './virtualElements.js';
 import { bindingEvent, subscribeToBindingEvent } from './bindingEvent.js';
 import type { BindingInfo } from './bindingEvent.js';
+import { ensureConfigured } from './configure.js';
 
 interface SortedBinding {
   key: string;
@@ -326,6 +327,7 @@ export function applyBindings(
   rootNode: Node,
   extendContextCallback?: (self: BindingContext, parentContext: BindingContext | undefined, dataItem: unknown) => void,
 ): void {
+  ensureConfigured();
   if (!rootNode || (rootNode.nodeType !== 1 && rootNode.nodeType !== 8)) {
     throw new Error('applyBindings: second parameter should be a DOM element or comment node');
   }
@@ -339,6 +341,7 @@ export function applyBindingsToDescendants(
   viewModelOrBindingContext: unknown,
   rootNode: Node,
 ): void {
+  ensureConfigured();
   if (rootNode.nodeType === 1 || rootNode.nodeType === 8) {
     applyBindingsToDescendantsInternal(
       getBindingContext(viewModelOrBindingContext),
@@ -352,6 +355,7 @@ export function applyBindingsToNode(
   bindings: Record<string, unknown>,
   viewModelOrBindingContext?: unknown,
 ): { shouldBindDescendants: boolean } {
+  ensureConfigured();
   const context = getBindingContext(viewModelOrBindingContext);
   const accessors = makeBindingAccessors(bindings, context, node);
   return applyBindingsToNodeInternal(node, accessors, context);
@@ -362,6 +366,7 @@ export function applyBindingAccessorsToNode(
   bindings: Record<string, () => unknown> | ((ctx: BindingContext, node: Node) => Record<string, () => unknown>),
   viewModelOrBindingContext?: unknown,
 ): { shouldBindDescendants: boolean } {
+  ensureConfigured();
   const context = getBindingContext(viewModelOrBindingContext);
   return applyBindingsToNodeInternal(node, bindings, context);
 }

@@ -9,9 +9,17 @@ export const options: {
   onError: ((error: unknown) => void) | null;
   viewModelFactory: ViewModelFactory;
   customElementDisplayContents: boolean;
+  interpolation: boolean;
+  attributeInterpolation: boolean;
+  namespacedBindings: boolean;
+  filters: boolean;
 } = {
   deferUpdates: false,
   onError: null,
   viewModelFactory: defaultViewModelFactory,
   customElementDisplayContents: true,
+  interpolation: false,
+  attributeInterpolation: false,
+  namespacedBindings: false,
+  filters: false,
 };

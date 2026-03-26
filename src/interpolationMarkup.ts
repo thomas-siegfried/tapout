@@ -1,5 +1,6 @@
 import { addNodePreprocessor } from './bindingProvider.js';
 import type { NodePreprocessFn } from './bindingProvider.js';
+import { options } from './options.js';
 
 // ---- Interpolation Parser ----
 
@@ -124,5 +125,6 @@ export const interpolationMarkupPreprocessor: NodePreprocessFn = function (node:
 // ---- Enable ----
 
 export function enableInterpolationMarkup(): void {
+  options.interpolation = true;
   addNodePreprocessor(interpolationMarkupPreprocessor);
 }

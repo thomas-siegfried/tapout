@@ -831,20 +831,76 @@ function isWritableObs(value: unknown): value is Observable<unknown> | Computed<
   return false;
 }
 
-// ---- enter: fires callback on Enter keypress ----
+// ---- Key event bindings (keydown / keyup with key + modifier filtering) ----
 
-const enterHandler: BindingHandler = {
-  init(element, valueAccessor) {
-    (element as HTMLElement).addEventListener('keydown', (evt: Event) => {
-      if ((evt as KeyboardEvent).key === 'Enter') {
-        const callback = valueAccessor();
-        if (typeof callback === 'function') {
-          callback.call(null, evt);
-        }
-      }
-    });
-  },
+const KEY_ALIASES: Record<string, string> = {
+  enter: 'Enter', tab: 'Tab', esc: 'Escape', escape: 'Escape',
+  space: ' ', delete: 'Delete', backspace: 'Backspace',
+  up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight',
 };
+
+const MODIFIER_KEYS = new Set(['ctrl', 'alt', 'shift', 'meta']);
+
+const MODIFIER_PROPS: Record<string, string> = {
+  ctrl: 'ctrlKey', alt: 'altKey', shift: 'shiftKey', meta: 'metaKey',
+};
+
+function createKeyFilteredHandler(eventType: string, name: string): BindingHandler {
+  const parts = name.split('.');
+  const modifiers: string[] = [];
+  let keyName: string | undefined;
+
+  for (const part of parts) {
+    if (MODIFIER_KEYS.has(part)) {
+      modifiers.push(part);
+    } else if (!keyName) {
+      keyName = KEY_ALIASES[part] ?? part;
+    }
+  }
+
+  return {
+    init(node, valueAccessor, allBindings, _viewModel, bindingContext) {
+      const el = node as HTMLElement;
+      el.addEventListener(eventType, function (event: Event) {
+        const ke = event as KeyboardEvent;
+        if (keyName && ke.key !== keyName) return;
+        for (const mod of modifiers) {
+          if (!ke[MODIFIER_PROPS[mod] as keyof KeyboardEvent]) return;
+        }
+
+        const callback = valueAccessor();
+        if (typeof callback !== 'function') return;
+
+        let handlerReturnValue: unknown;
+        try {
+          const data = bindingContext.$data;
+          handlerReturnValue = callback.call(data, data, event);
+        } finally {
+          if (handlerReturnValue !== true) {
+            event.preventDefault();
+          }
+        }
+
+        const bubble = allBindings.get(eventType + 'Bubble') !== false;
+        if (!bubble) {
+          event.stopPropagation();
+        }
+      });
+    },
+  };
+}
+
+const keydownHandler = makeEventHandlerShortcut('keydown');
+keydownHandler.getNamespacedHandler = function (name, _ns, _namespacedName) {
+  return createKeyFilteredHandler('keydown', name);
+};
+
+const keyupHandler = makeEventHandlerShortcut('keyup');
+keyupHandler.getNamespacedHandler = function (name, _ns, _namespacedName) {
+  return createKeyFilteredHandler('keyup', name);
+};
+
+const enterHandler = createKeyFilteredHandler('keydown', 'enter');
 
 // ---- modal: toggles <dialog> showModal/close based on observable boolean ----
 
@@ -891,6 +947,8 @@ bindingHandlers['hasfocus'] = hasfocusHandler;
 bindingHandlers['hasFocus'] = hasfocusHandler;
 bindingHandlers['selectedOptions'] = selectedOptionsHandler;
 bindingHandlers['options'] = optionsHandler;
+bindingHandlers['keydown'] = keydownHandler;
+bindingHandlers['keyup'] = keyupHandler;
 bindingHandlers['enter'] = enterHandler;
 bindingHandlers['modal'] = modalHandler;
 
