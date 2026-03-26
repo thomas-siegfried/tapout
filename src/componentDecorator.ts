@@ -27,7 +27,14 @@ export interface ComponentOptions {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyClass = new (...args: any[]) => any;
-type ComponentClassDecorator = (target: AnyClass, context: ClassDecoratorContext) => void;
+
+/**
+ * Works as either a Stage 3 class decorator or a legacy class decorator.
+ */
+export interface ComponentClassDecorator {
+  (target: AnyClass, context: ClassDecoratorContext): void;
+  (target: AnyClass): void;
+}
 
 export function component(tag: string, template: string): ComponentClassDecorator;
 export function component(options: ComponentOptions): ComponentClassDecorator;
@@ -39,7 +46,7 @@ export function component(
     ? { tag: tagOrOptions, template: template! }
     : tagOrOptions;
 
-  return function (target: AnyClass, _context: ClassDecoratorContext): void {
+  return function (target: AnyClass, _context?: ClassDecoratorContext): void {
     componentTagMap.set(target, opts.tag);
 
     components.register(opts.tag, {
@@ -51,5 +58,5 @@ export function component(
       },
       synchronous: opts.synchronous,
     });
-  };
+  } as ComponentClassDecorator;
 }
