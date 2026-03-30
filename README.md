@@ -49,7 +49,7 @@ Tapout provides dependency-tracked observables, computed values, declarative DOM
 ## Installation
 
 ```bash
-npm install tapout
+npm install @thomas-siegfried/tapout
 ```
 
 Tapout is ESM-only and requires a modern bundler or runtime that supports ES modules.
@@ -60,23 +60,23 @@ Tapout provides two entry points for tree shaking:
 
 ```typescript
 // Full library — reactivity + DOM bindings + templates + components
-import { Observable, applyBindings, renderTemplate } from 'tapout';
+import { Observable, applyBindings, renderTemplate } from '@thomas-siegfried/tapout';
 
 // Core only — reactivity primitives, no DOM dependencies
-import { Observable, Computed, Event, effect } from 'tapout/core';
+import { Observable, Computed, Event, effect } from '@thomas-siegfried/tapout/core';
 ```
 
 | Entry Point | Includes |
 | --- | --- |
-| `tapout` | Everything: core reactivity, DOM bindings, templates, components, side-effect registrations |
-| `tapout/core` | Observables, computed, subscriptions, events, effects, extenders, decorators, disposable, task scheduler, pure utilities |
+| `@thomas-siegfried/tapout` | Everything: core reactivity, DOM bindings, templates, components, side-effect registrations |
+| `@thomas-siegfried/tapout/core` | Observables, computed, subscriptions, events, effects, extenders, decorators, disposable, task scheduler, pure utilities |
 
-Use `tapout/core` when you only need the reactive data layer — for example, in a Node.js backend, a shared library, or a project with its own rendering layer.
+Use `@thomas-siegfried/tapout/core` when you only need the reactive data layer — for example, in a Node.js backend, a shared library, or a project with its own rendering layer.
 
 ## Quick Start
 
 ```typescript
-import { Observable, Computed, applyBindings } from 'tapout';
+import { Observable, Computed, applyBindings } from '@thomas-siegfried/tapout';
 
 class ViewModel {
   firstName = new Observable('Jane');
@@ -96,7 +96,7 @@ applyBindings(new ViewModel(), document.body);
 Or with decorators:
 
 ```typescript
-import { reactive, computed, applyBindings } from 'tapout';
+import { reactive, computed, applyBindings } from '@thomas-siegfried/tapout';
 
 class ViewModel {
   @reactive accessor firstName = 'Jane';
@@ -119,7 +119,7 @@ applyBindings(new ViewModel(), document.body);
 A mutable reactive value. Reading inside a computed or effect automatically registers a dependency.
 
 ```typescript
-import { Observable } from 'tapout';
+import { Observable } from '@thomas-siegfried/tapout';
 
 const count = new Observable(0);
 
@@ -150,7 +150,7 @@ Type guard: `isObservable(value)`.
 An `Observable<T[]>` with array-like methods that automatically notify on mutation.
 
 ```typescript
-import { ObservableArray } from 'tapout';
+import { ObservableArray } from '@thomas-siegfried/tapout';
 
 const items = new ObservableArray(['a', 'b', 'c']);
 
@@ -182,7 +182,7 @@ Type guard: `isObservableArray(value)`.
 A derived value that automatically re-evaluates when its dependencies change.
 
 ```typescript
-import { Observable, Computed } from 'tapout';
+import { Observable, Computed } from '@thomas-siegfried/tapout';
 
 const width = new Observable(10);
 const height = new Observable(20);
@@ -240,7 +240,7 @@ Type guard: `isComputed(value)`.
 A memory-optimized computed that *sleeps* when it has no subscribers, releasing its dependency subscriptions. It *wakes* automatically when someone subscribes.
 
 ```typescript
-import { PureComputed } from 'tapout';
+import { PureComputed } from '@thomas-siegfried/tapout';
 
 const label = new PureComputed(() => `Count: ${count.get()}`);
 ```
@@ -254,7 +254,7 @@ Type guards: `isPureComputed(value)`, `isComputed(value)`.
 Side-effect helpers that track reactive dependencies and re-run when they change.
 
 ```typescript
-import { Observable, effect, observe } from 'tapout';
+import { Observable, effect, observe } from '@thomas-siegfried/tapout';
 
 const name = new Observable('Alice');
 
@@ -339,7 +339,7 @@ Events are stateless, hot signals — like observables that don't hold a value. 
 An `Event` has a **two-sided** design (similar to Deferred/Promise): the owner calls `emit()`, and consumers receive the read-only `subscribable` side.
 
 ```typescript
-import { Event } from 'tapout';
+import { Event } from '@thomas-siegfried/tapout';
 
 class SaveEvent {
   constructor(public id: number, public success: boolean) {}
@@ -385,7 +385,7 @@ event.subscribable.on(DeleteEvent).subscribe(e => {
 **Aggregate events** — roll up multiple event sources into one, like DOM event bubbling through a tree:
 
 ```typescript
-import { Event, AggregateEvent } from 'tapout';
+import { Event, AggregateEvent } from '@thomas-siegfried/tapout';
 
 class ItemChangedEvent {
   constructor(public itemId: number) {}
@@ -439,7 +439,7 @@ Events are **hot** — no replay, no current value. If nobody is listening when 
 **DisposableGroup** — a utility for centralized subscription cleanup. Works with both `Subscription` (from observables) and `EventSubscription` (from events):
 
 ```typescript
-import { DisposableGroup, Observable, Event } from 'tapout';
+import { DisposableGroup, Observable, Event } from '@thomas-siegfried/tapout';
 
 class MyComponent {
   private _subs = new DisposableGroup();
@@ -485,7 +485,7 @@ search.extend({ deferred: true });
 ### Custom Extenders
 
 ```typescript
-import { registerExtender } from 'tapout';
+import { registerExtender } from '@thomas-siegfried/tapout';
 
 registerExtender('logChanges', (target, label) => {
   target.subscribe(val => console.log(`[${label}]`, val));
@@ -500,7 +500,7 @@ obs.extend({ logChanges: 'myObs' });
 Enable deferred notifications for all new observables and computeds:
 
 ```typescript
-import { options } from 'tapout';
+import { options } from '@thomas-siegfried/tapout';
 
 options.deferUpdates = true;
 ```
@@ -518,7 +518,7 @@ Tapout provides TC39 Stage 3 class decorators for a cleaner syntax. These work w
 Turns a class accessor into an `Observable`-backed property.
 
 ```typescript
-import { reactive } from 'tapout';
+import { reactive } from '@thomas-siegfried/tapout';
 
 class Settings {
   @reactive accessor theme = 'dark';
@@ -542,7 +542,7 @@ Pass extender options:
 Turns a class accessor into an `ObservableArray`-backed property.
 
 ```typescript
-import { reactiveArray } from 'tapout';
+import { reactiveArray } from '@thomas-siegfried/tapout';
 
 class TodoList {
   @reactiveArray accessor items: string[] = [];
@@ -560,7 +560,7 @@ The getter returns the `ObservableArray` instance directly. The setter calls `se
 Works on getters, getter+setter pairs, and methods.
 
 ```typescript
-import { reactive, computed } from 'tapout';
+import { reactive, computed } from '@thomas-siegfried/tapout';
 
 class FullName {
   @reactive accessor first = 'John';
@@ -588,7 +588,7 @@ class FullName {
 Retrieve or replace the underlying reactive primitive for a decorated property:
 
 ```typescript
-import { getObservable, replaceObservable } from 'tapout';
+import { getObservable, replaceObservable } from '@thomas-siegfried/tapout';
 
 const obs = getObservable(instance, 'theme');
 // returns the Observable, ObservableArray, or Computed backing the property
@@ -604,7 +604,7 @@ replaceObservable(instance, 'theme', anotherObservable);
 ### Applying Bindings
 
 ```typescript
-import { applyBindings } from 'tapout';
+import { applyBindings } from '@thomas-siegfried/tapout';
 
 const vm = new ViewModel();
 applyBindings(vm, document.getElementById('app'));
@@ -639,7 +639,7 @@ Inside bindings, the following context properties are available:
 Inspect the context of a DOM node programmatically:
 
 ```typescript
-import { contextFor, dataFor } from 'tapout';
+import { contextFor, dataFor } from '@thomas-siegfried/tapout';
 
 const ctx = contextFor(someElement); // BindingContext
 const data = dataFor(someElement);   // $data
@@ -834,7 +834,7 @@ The following bindings support virtual elements: `text`, `html`, `if`, `ifnot`, 
 Tapout has several opt-in features that enhance the binding system. Enable them declaratively via `options`, or all at once with `enableAll()`:
 
 ```typescript
-import { options } from 'tapout';
+import { options } from '@thomas-siegfried/tapout';
 
 options.interpolation = true;          // {{ }} text interpolation
 options.attributeInterpolation = true; // {{ }} inside HTML attributes
@@ -845,7 +845,7 @@ options.filters = true;                // Pipe filters on all bindings
 Features are activated automatically on the first `applyBindings` call. Or enable everything at once:
 
 ```typescript
-import { enableAll } from 'tapout';
+import { enableAll } from '@thomas-siegfried/tapout';
 enableAll();
 ```
 
@@ -865,7 +865,7 @@ The `options` object also includes runtime settings:
 Enable text interpolation for a more template-like syntax (or set `options.interpolation = true`):
 
 ```typescript
-import { enableInterpolationMarkup } from 'tapout';
+import { enableInterpolationMarkup } from '@thomas-siegfried/tapout';
 enableInterpolationMarkup();
 ```
 
@@ -888,7 +888,7 @@ Then use `{{ }}` in your HTML:
 Enable interpolation inside HTML attributes (or set `options.attributeInterpolation = true`):
 
 ```typescript
-import { enableAttributeInterpolationMarkup } from 'tapout';
+import { enableAttributeInterpolationMarkup } from '@thomas-siegfried/tapout';
 enableAttributeInterpolationMarkup();
 ```
 
@@ -902,7 +902,7 @@ enableAttributeInterpolationMarkup();
 Enable shorthand dot-notation for attribute-like bindings (or set `options.namespacedBindings = true`):
 
 ```typescript
-import { enableNamespacedBindings } from 'tapout';
+import { enableNamespacedBindings } from '@thomas-siegfried/tapout';
 enableNamespacedBindings();
 ```
 
@@ -916,7 +916,7 @@ enableNamespacedBindings();
 Add pipe-style filters to binding values. Set `options.filters = true` to enable on all bindings, or use `enableTextFilter` for specific ones:
 
 ```typescript
-import { enableTextFilter } from 'tapout';
+import { enableTextFilter } from '@thomas-siegfried/tapout';
 
 enableTextFilter('text');
 enableTextFilter('html');
@@ -933,7 +933,7 @@ enableTextFilter('html');
 **Custom filters:**
 
 ```typescript
-import { filters } from 'tapout';
+import { filters } from '@thomas-siegfried/tapout';
 
 filters['truncate'] = (value: string, maxLength: number) => {
   return value.length > maxLength ? value.slice(0, maxLength) + '...' : value;
@@ -953,7 +953,7 @@ Filters work in both `data-bind` attributes and `{{ }}` interpolation.
 ### Registration
 
 ```typescript
-import { components } from 'tapout';
+import { components } from '@thomas-siegfried/tapout';
 
 components.register('user-card', {
   template: '<div><span data-bind="text: name"></span></div>',
@@ -979,7 +979,7 @@ Or with the `component` binding:
 Register components declaratively:
 
 ```typescript
-import { component, reactive } from 'tapout';
+import { component, reactive } from '@thomas-siegfried/tapout';
 
 @component('user-card', '<div><span data-bind="text: name"></span></div>')
 class UserCard {
@@ -997,7 +997,7 @@ class UserCard { ... }
 Retrieve the tag from a class or instance:
 
 ```typescript
-import { getComponentTag } from 'tapout';
+import { getComponentTag } from '@thomas-siegfried/tapout';
 getComponentTag(UserCard);      // 'user-card'
 getComponentTag(new UserCard()); // 'user-card'
 ```
@@ -1043,7 +1043,7 @@ The `$`-prefix syntax passes the parent's raw `Observable` so both sides read an
 You can also call `wireParams` manually:
 
 ```typescript
-import { wireParams } from 'tapout';
+import { wireParams } from '@thomas-siegfried/tapout';
 
 const result = wireParams(viewModelInstance, params);
 // result.subscriptions — array of subscriptions to dispose later
@@ -1109,7 +1109,7 @@ Slotted content binds in the **parent** context, not the component's context. Fa
 Any registered component is automatically detected as a custom element. Tapout applies `display: contents` to custom elements by default so they don't affect layout. Disable this with:
 
 ```typescript
-import { options } from 'tapout';
+import { options } from '@thomas-siegfried/tapout';
 options.customElementDisplayContents = false;
 ```
 
@@ -1122,7 +1122,7 @@ options.customElementDisplayContents = false;
 Deep-unwrap all observables in an object graph:
 
 ```typescript
-import { toJS, toJSON } from 'tapout';
+import { toJS, toJSON } from '@thomas-siegfried/tapout';
 
 const plain = toJS(viewModel);         // plain JS object, no observables
 const json = toJSON(viewModel, null, 2); // JSON string
@@ -1135,7 +1135,7 @@ Handles nested objects, arrays, `ObservableArray`, `Date`, `RegExp`, and circula
 Wait for a reactive condition to become truthy:
 
 ```typescript
-import { when } from 'tapout';
+import { when } from '@thomas-siegfried/tapout';
 
 // With callback — returns a disposable Subscription
 const sub = when(() => items.length > 0, () => {
@@ -1151,7 +1151,7 @@ await when(() => isReady.get());
 ### unwrapObservable / peekObservable
 
 ```typescript
-import { unwrapObservable, peekObservable } from 'tapout';
+import { unwrapObservable, peekObservable } from '@thomas-siegfried/tapout';
 
 unwrapObservable(obs);  // recursively unwraps observables (up to 10 levels)
 peekObservable(obs);    // same but uses peek() — no dependency tracking
@@ -1160,7 +1160,7 @@ peekObservable(obs);    // same but uses peek() — no dependency tracking
 ### DOM Utilities
 
 ```typescript
-import { cleanNode, removeNode, addDisposeCallback } from 'tapout';
+import { cleanNode, removeNode, addDisposeCallback } from '@thomas-siegfried/tapout';
 
 addDisposeCallback(element, () => {
   // runs when the node is cleaned or removed
@@ -1177,7 +1177,7 @@ removeNode(element); // clean + remove from parent
 The `options` object controls global behavior:
 
 ```typescript
-import { options } from 'tapout';
+import { options } from '@thomas-siegfried/tapout';
 ```
 
 

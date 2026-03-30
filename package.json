@@ -1,10 +1,14 @@
 {
-  "name": "tapout",
-  "version": "1.0.0",
+  "name": "@thomas-siegfried/tapout",
+  "version": "0.0.1",
   "description": "",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thomas-siegfried/tapout"
+  },
   "exports": {
     ".": {
       "typescript": "./src/index.ts",
@@ -37,7 +41,7 @@
     "prepublishOnly": "npm run build"
   },
   "keywords": [],
-  "author": "",
+  "author": "Thomas Siegfried",
   "license": "MIT",
   "devDependencies": {
     "@playwright/test": "^1.58.2",
