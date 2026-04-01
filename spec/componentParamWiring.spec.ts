@@ -107,6 +107,46 @@ describe('component param wiring', () => {
       cleanNode(container);
       document.body.removeChild(container as never);
     });
+
+    it('wires reactive parent params into raw Observable child fields', () => {
+      class ChildVM {
+        chartData = new Observable('child default');
+      }
+
+      let childInstance: ChildVM | null = null;
+
+      components.register('raw-observable-child', {
+        template: '<span></span>',
+        viewModel: {
+          createViewModel() {
+            childInstance = new ChildVM();
+            return childInstance;
+          },
+        },
+        synchronous: true,
+      });
+
+      class ParentVM {
+        @reactive accessor vendorChartData: string = 'Initial';
+      }
+      const parentVM = new ParentVM();
+
+      const container = createElement('div');
+      const child = createElement('raw-observable-child', { params: 'chartData: vendorChartData' });
+      container.appendChild(child as never);
+      document.body.appendChild(container as never);
+
+      applyBindings(parentVM, container);
+
+      expect(childInstance).not.toBeNull();
+      expect(childInstance!.chartData.get()).toBe('Initial');
+
+      parentVM.vendorChartData = 'Updated';
+      expect(childInstance!.chartData.get()).toBe('Updated');
+
+      cleanNode(container);
+      document.body.removeChild(container as never);
+    });
   });
 
   describe('$-prefix observable params', () => {

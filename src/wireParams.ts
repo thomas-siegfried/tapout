@@ -7,6 +7,18 @@ import { addDisposeCallback } from './domNodeDisposal.js';
 
 const SKIP_KEYS = new Set(['$raw']);
 
+function getWritableChildTarget(instance: object, key: string): Observable<unknown> | Computed<unknown> | undefined {
+  const decorated = getObservable(instance, key);
+  if (decorated instanceof Observable) return decorated;
+  if (decorated instanceof Computed && decorated.hasWriteFunction) return decorated;
+
+  const directValue = (instance as Record<string, unknown>)[key];
+  if (directValue instanceof Observable) return directValue;
+  if (directValue instanceof Computed && directValue.hasWriteFunction) return directValue;
+
+  return undefined;
+}
+
 export interface WireParamsResult {
   subscriptions: Subscription<unknown>[];
 }
@@ -22,8 +34,8 @@ export function wireParams(
     if (SKIP_KEYS.has(key)) continue;
 
     const paramValue = params[key];
-    const childObs = getObservable(instance, key);
-    const childIsReactive = childObs !== undefined && isSubscribable(childObs);
+    const childTarget = getWritableChildTarget(instance, key);
+    const childIsReactive = childTarget !== undefined && isSubscribable(childTarget);
 
     if (paramValue instanceof Observable) {
       if (childIsReactive) {
@@ -32,9 +44,17 @@ export function wireParams(
         (instance as Record<string, unknown>)[key] = paramValue.get();
       }
     } else if (paramValue instanceof Computed) {
-      (instance as Record<string, unknown>)[key] = paramValue.get();
+      if (childTarget) {
+        childTarget.set(paramValue.get());
+      } else {
+        (instance as Record<string, unknown>)[key] = paramValue.get();
+      }
       const sub = paramValue.subscribe((newValue: unknown) => {
-        (instance as Record<string, unknown>)[key] = newValue;
+        if (childTarget) {
+          childTarget.set(newValue);
+        } else {
+          (instance as Record<string, unknown>)[key] = newValue;
+        }
       });
       subscriptions.push(sub);
       if (element) {

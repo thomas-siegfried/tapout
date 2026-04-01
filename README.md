@@ -4,6 +4,8 @@ A modern ESM reactivity and templating library, spiritually inspired by [Knockou
 
 Tapout provides dependency-tracked observables, computed values, declarative DOM bindings, a component system, and TC39 Stage 3 decorators — all in a lightweight, explicit architecture built on TypeScript.
 
+For detailed TypeScript decorator setup and compatibility notes, see [`decorator-config.md`](./decorator-config.md).
+
 ## Table of Contents
 
 - [Installation](#installation)

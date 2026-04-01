@@ -89,6 +89,21 @@ describe('wireParams', () => {
       parentObs.set('Updated');
       expect(child.label).toBe('Updated');
     });
+
+    it('updates raw Observable child fields without replacing the Observable instance', () => {
+      const parentObs = new Observable('Hello');
+      const paramComputed = new Computed(() => parentObs.get());
+      const child = { label: new Observable('default') };
+      const originalChildObs = child.label;
+
+      wireParams(child, { label: paramComputed });
+      expect(child.label).toBe(originalChildObs);
+      expect(child.label.get()).toBe('Hello');
+
+      parentObs.set('Updated');
+      expect(child.label).toBe(originalChildObs);
+      expect(child.label.get()).toBe('Updated');
+    });
   });
 
   describe('with Observable params (two-way shared)', () => {

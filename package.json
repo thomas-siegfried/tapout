@@ -1,6 +1,6 @@
 {
   "name": "@thomas-siegfried/tapout",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "type": "module",
   "main": "./dist/index.js",
@@ -30,7 +30,9 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "llms.txt",
+    "decorator-config.md"
   ],
   "scripts": {
     "build": "tsc",
