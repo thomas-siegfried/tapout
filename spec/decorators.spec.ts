@@ -208,6 +208,21 @@ describe('@reactiveArray', () => {
     expect(items.find(s => s === 'b')).toBe('b');
   });
 
+  it('supports find on the decorated property (via proxy)', () => {
+    const list = new TodoList();
+    expect(list.items.find((s) => s === 'b')).toBe('b');
+    expect(list.items.find((s) => s === 'z')).toBeUndefined();
+  });
+
+  it('coerces non-array assignment to [] so methods like find do not throw', () => {
+    const list = new TodoList();
+    list.items = null as unknown as string[];
+    expect(list.items.find((s) => s === 'a')).toBeUndefined();
+    expect((getObservable(list, 'items') as ObservableArray<string>).get()).toEqual([]);
+    list.items = {} as unknown as string[];
+    expect(list.items.find((s) => s === 'b')).toBeUndefined();
+  });
+
   describe('with extender options', () => {
     class RateLimitedList {
       @reactiveArray({ notify: 'always' }) accessor tags: string[] = [];

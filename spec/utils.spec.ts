@@ -2,6 +2,7 @@ import {
   Observable,
   Computed,
   PureComputed,
+  reactiveArray,
 } from '#src/index.js';
 import { ObservableArray } from '#src/observableArray.js';
 import { toJS, toJSON, when } from '#src/utils.js';
@@ -112,6 +113,26 @@ describe('toJS', () => {
     it('unwraps ObservableArray containing observables', () => {
       const arr = new ObservableArray([new Observable(10), new Observable(20)]);
       expect(toJS(arr)).toEqual([10, 20]);
+    });
+  });
+
+  describe('@reactiveArray properties (decorator proxy)', () => {
+    class TagsVm {
+      @reactiveArray accessor tags: string[] = ['a', 'b'];
+    }
+
+    it('unwraps to a plain array (not ObservableArray / proxy)', () => {
+      const vm = new TagsVm();
+      const plain = toJS(vm) as { tags: string[] };
+      expect(plain.tags).toEqual(['a', 'b']);
+      expect(Array.isArray(plain.tags)).toBe(true);
+      expect(plain.tags.constructor).toBe(Array);
+    });
+
+    it('serializes to JSON with a real array value', () => {
+      const vm = new TagsVm();
+      const json = toJSON(vm);
+      expect(JSON.parse(json)).toEqual({ tags: ['a', 'b'] });
     });
   });
 

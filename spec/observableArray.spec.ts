@@ -27,6 +27,11 @@ describe('ObservableArray', () => {
       const arr = new ObservableArray();
       expect(arr instanceof Subscribable).toBe(true);
     });
+
+    it('coerces non-array initial value to []', () => {
+      expect(new ObservableArray(null as unknown as number[]).get()).toEqual([]);
+      expect(new ObservableArray({} as unknown as string[]).get()).toEqual([]);
+    });
   });
 
   describe('get / set / peek', () => {
@@ -52,6 +57,17 @@ describe('ObservableArray', () => {
       arr.subscribe((v) => values.push(v.slice()));
       arr.set([3, 4]);
       expect(values).toEqual([[3, 4]]);
+    });
+
+    it('coerces non-array set value to [] so readers stay valid', () => {
+      const arr = new ObservableArray([1, 2, 3]);
+      arr.set(null as unknown as number[]);
+      expect(arr.get()).toEqual([]);
+      expect(arr.find((x) => x === 1)).toBeUndefined();
+      arr.set([5]);
+      arr.set({} as unknown as number[]);
+      expect(arr.get()).toEqual([]);
+      expect(() => arr.map((x) => x * 2)).not.toThrow();
     });
   });
 

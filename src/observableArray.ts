@@ -14,7 +14,15 @@ export class ObservableArray<T> extends Observable<T[]> {
   compareArrayOptions: CompareArraysOptions = { sparse: true };
 
   constructor(initialValues?: T[]) {
-    super(initialValues ?? []);
+    super(Array.isArray(initialValues) ? initialValues : []);
+  }
+
+  /**
+   * Replaces the backing array. Non-array values (e.g. plain objects from JSON) are coerced to `[]`,
+   * consistent with `@reactiveArray` initialization, so readers like `.find` and indexed proxy access stay valid.
+   */
+  override set(value: T[]): void {
+    super.set((Array.isArray(value) ? value : []) as T[]);
   }
 
   // --- Array change tracking (lifecycle hooks) ---
