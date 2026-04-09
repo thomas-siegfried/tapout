@@ -57,6 +57,12 @@ describe('dependencyDetection', () => {
       begin({ callback: (_s, id) => ids.push(id) });
       try {
         registerDependency(sub);
+      } finally {
+        end();
+      }
+
+      begin({ callback: (_s, id) => ids.push(id) });
+      try {
         registerDependency(sub);
       } finally {
         end();

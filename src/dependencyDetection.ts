@@ -10,6 +10,8 @@ export interface TrackingFrame {
     getDependencies(): AnySubscribable[];
   };
   isInitial?: boolean;
+  /** Dedupes repeated registration of the same subscribable in one frame (e.g. `@reactiveArray` getter + indexed proxy read). */
+  _dependencyDedupe?: WeakSet<AnySubscribable>;
 }
 
 let lastId = 0;
@@ -34,6 +36,15 @@ export function registerDependency(subscribable: AnySubscribable): void {
     if (!isSubscribable(subscribable)) {
       throw new Error('Only subscribable things can act as dependencies');
     }
+    let dedupe = currentFrame._dependencyDedupe;
+    if (!dedupe) {
+      dedupe = new WeakSet();
+      currentFrame._dependencyDedupe = dedupe;
+    }
+    if (dedupe.has(subscribable)) {
+      return;
+    }
+    dedupe.add(subscribable);
     currentFrame.callback(
       subscribable,
       subscribable._id || (subscribable._id = getId()),

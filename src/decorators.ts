@@ -1,5 +1,6 @@
 import { Observable } from './observable.js';
 import { ObservableArray } from './observableArray.js';
+import { getReactiveArrayDecoratorProxy } from './reactiveArrayDecoratorProxy.js';
 import { Computed } from './computed.js';
 import type { Subscribable } from './subscribable.js';
 import type { ExtenderOptions } from './extenders.js';
@@ -157,12 +158,12 @@ function createStage3ReactiveArray(extenders?: ExtenderOptions) {
       const obs = new ObservableArray(arr);
       if (extenders) obs.extend(extenders);
       storeObservable(this as object, context.name, obs);
-      return obs;
+      return getReactiveArrayDecoratorProxy(obs);
     },
     get(this: object): unknown {
       const obs = lookupObservable(this, context.name) as ObservableArray<unknown>;
       registerDependency(obs);
-      return obs;
+      return getReactiveArrayDecoratorProxy(obs);
     },
     set(this: object, newValue: unknown): void {
       const obs = lookupObservable(this, context.name) as ObservableArray<unknown>;
@@ -193,7 +194,7 @@ function applyLegacyReactiveArray(
         storeObservable(this, propertyKey, obs);
       }
       registerDependency(obs);
-      return obs;
+      return getReactiveArrayDecoratorProxy(obs as ObservableArray<unknown>);
     },
     set(this: object, value: unknown) {
       let obs = lookupObservable(this, propertyKey);

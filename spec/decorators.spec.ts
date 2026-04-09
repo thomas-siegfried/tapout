@@ -161,6 +161,45 @@ describe('@reactiveArray', () => {
     expect((list.items as unknown as ObservableArray<string>).length).toBe(2);
   });
 
+  it('returns a proxy distinct from getObservable (which is the ObservableArray)', () => {
+    const list = new TodoList();
+    const obs = getObservable(list, 'items') as ObservableArray<string>;
+    expect(obs).toBeInstanceOf(ObservableArray);
+    expect(Object.is(list.items, obs)).toBe(false);
+    expect(list.items).toBeInstanceOf(ObservableArray);
+  });
+
+  it('supports indexed read and write with notifications', () => {
+    const list = new TodoList();
+    const obs = getObservable(list, 'items') as ObservableArray<string>;
+    const spy = jasmine.createSpy('sub');
+    obs.subscribe(spy);
+
+    expect(list.items[0]).toBe('a');
+    list.items[0] = 'A';
+    expect(spy).toHaveBeenCalled();
+    expect(obs.get()).toEqual(['A', 'b']);
+  });
+
+  it('registers dependency when reading an indexed element', () => {
+    const list = new TodoList();
+    const deps: Subscribable[] = [];
+    begin({
+      callback: (sub) => deps.push(sub),
+    });
+    try {
+      void list.items[1];
+    } finally {
+      end();
+    }
+    expect(deps.length).toBe(1);
+    const backing = getObservable(list, 'items');
+    expect(backing).toBeDefined();
+    if (backing !== undefined) {
+      expect(deps[0]).toBe(backing);
+    }
+  });
+
   it('supports map, filter, find', () => {
     const list = new TodoList();
     const items = list.items as unknown as ObservableArray<string>;
