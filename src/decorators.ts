@@ -19,6 +19,8 @@ type AnyAccessorResult = ClassAccessorDecoratorResult<any, any>;
 
 const accessorRegistry = new Map<string | symbol, WeakMap<object, AnySubscribable>>();
 const computedStorage = new WeakMap<object, Map<string | symbol, Computed<unknown>>>();
+const declaredComputedKeys = new WeakMap<object, Set<string | symbol>>();
+const computedKeysByPrototype = new WeakMap<object, Set<string | symbol>>();
 
 function storeObservable(instance: object, key: string | symbol, obs: AnySubscribable): void {
   let instanceMap = accessorRegistry.get(key);
@@ -27,6 +29,24 @@ function storeObservable(instance: object, key: string | symbol, obs: AnySubscri
     accessorRegistry.set(key, instanceMap);
   }
   instanceMap.set(instance, obs);
+}
+
+function registerDeclaredComputedKey(instance: object, key: string | symbol): void {
+  let keys = declaredComputedKeys.get(instance);
+  if (!keys) {
+    keys = new Set();
+    declaredComputedKeys.set(instance, keys);
+  }
+  keys.add(key);
+}
+
+function registerComputedKeyForPrototype(prototype: object, key: string | symbol): void {
+  let keys = computedKeysByPrototype.get(prototype);
+  if (!keys) {
+    keys = new Set();
+    computedKeysByPrototype.set(prototype, keys);
+  }
+  keys.add(key);
 }
 
 function lookupObservable(instance: object, key: string | symbol): AnySubscribable | undefined {
@@ -271,9 +291,19 @@ type AnyFunction = (...args: any[]) => any;
 // Stage 3 @computed implementation
 function applyStage3Computed(
   value: AnyFunction,
-  context: { kind: string; name: string | symbol },
+  context: {
+    kind: string;
+    name: string | symbol;
+    addInitializer?: (initializer: (this: object) => void) => void;
+  },
 ): AnyFunction | void {
   const { kind, name } = context;
+
+  if (kind === 'getter' || kind === 'method') {
+    context.addInitializer?.(function (this: object) {
+      registerDeclaredComputedKey(this, name);
+    });
+  }
 
   if (kind === 'getter') {
     const originalGetter = value;
@@ -311,6 +341,10 @@ function applyLegacyComputed(
   propertyKey: string | symbol,
   descriptor: PropertyDescriptor,
 ): PropertyDescriptor {
+  if (descriptor.get || typeof descriptor.value === 'function') {
+    registerComputedKeyForPrototype(_target, propertyKey);
+  }
+
   if (descriptor.get) {
     const originalGetter = descriptor.get;
     const originalSetter = descriptor.set;
@@ -393,6 +427,47 @@ export function computed(
 }
 
 // --- getObservable() / replaceObservable() ---
+
+/**
+ * Returns property keys for tapout-decorated members on an instance
+ * (@reactive, @reactiveArray, @computed), including those missed by for...in.
+ */
+export function getDecoratedKeys(instance: object): (string | symbol)[] {
+  const keys = new Set<string | symbol>();
+
+  for (const [key, instanceMap] of accessorRegistry) {
+    if (instanceMap.has(instance)) {
+      keys.add(key);
+    }
+  }
+
+  const compMap = computedStorage.get(instance);
+  if (compMap) {
+    for (const key of compMap.keys()) {
+      keys.add(key);
+    }
+  }
+
+  const declared = declaredComputedKeys.get(instance);
+  if (declared) {
+    for (const key of declared) {
+      keys.add(key);
+    }
+  }
+
+  let proto: object | null = Object.getPrototypeOf(instance);
+  while (proto && proto !== Object.prototype) {
+    const protoComputed = computedKeysByPrototype.get(proto);
+    if (protoComputed) {
+      for (const key of protoComputed) {
+        keys.add(key);
+      }
+    }
+    proto = Object.getPrototypeOf(proto);
+  }
+
+  return [...keys];
+}
 
 export function getObservable(target: object, key: string | symbol): AnySubscribable | undefined {
   let obs = lookupObservable(target, key);

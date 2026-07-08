@@ -1,4 +1,5 @@
 import { PureComputed } from './computed.js';
+import { getDecoratedKeys } from './decorators.js';
 import { isReadableSubscribable } from './subscribable.js';
 import type { ReadableSubscribable, Subscription } from './subscribable.js';
 import { options } from './options.js';
@@ -17,6 +18,17 @@ export function peekObservable(value: unknown): unknown {
     value = value.peek();
   }
   return value;
+}
+
+function getObjectKeys(obj: object): (string | symbol)[] {
+  const keys = new Set<string | symbol>();
+  for (const key in obj) {
+    keys.add(key);
+  }
+  for (const key of getDecoratedKeys(obj)) {
+    keys.add(key);
+  }
+  return [...keys];
 }
 
 function canHaveProperties(obj: unknown): obj is Record<string | number, unknown> {
@@ -60,9 +72,10 @@ function mapJsObjectGraph(
         : propertyValue;
     }
   } else {
-    const out = output as Record<string, unknown>;
-    for (const key in rootObject) {
-      const propertyValue = peekObservable(rootObject[key]);
+    const src = rootObject as Record<string | symbol, unknown>;
+    const out = output as Record<string | symbol, unknown>;
+    for (const key of getObjectKeys(rootObject)) {
+      const propertyValue = peekObservable(src[key]);
       out[key] = canHaveProperties(propertyValue)
         ? (visited.get(propertyValue as object) ?? mapJsObjectGraph(propertyValue, visited))
         : propertyValue;

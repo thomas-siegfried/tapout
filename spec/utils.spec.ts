@@ -2,7 +2,9 @@ import {
   Observable,
   Computed,
   PureComputed,
+  reactive,
   reactiveArray,
+  computed,
 } from '#src/index.js';
 import { ObservableArray } from '#src/observableArray.js';
 import { toJS, toJSON, when } from '#src/utils.js';
@@ -133,6 +135,53 @@ describe('toJS', () => {
       const vm = new TagsVm();
       const json = toJSON(vm);
       expect(JSON.parse(json)).toEqual({ tags: ['a', 'b'] });
+    });
+  });
+
+  describe('decorated keys missed by for...in (Babel TC39 accessors)', () => {
+    function makeNonEnumerable(
+      obj: object,
+      key: string,
+    ): void {
+      const desc =
+        Object.getOwnPropertyDescriptor(obj, key) ??
+        Object.getOwnPropertyDescriptor(Object.getPrototypeOf(obj), key);
+      expect(desc).withContext(`property ${key}`).toBeDefined();
+      const holder = Object.prototype.hasOwnProperty.call(obj, key)
+        ? obj
+        : Object.getPrototypeOf(obj) as object;
+      Object.defineProperty(holder, key, { ...desc!, enumerable: false });
+    }
+
+    it('includes @reactive accessor values alongside plain enumerable properties', () => {
+      class Vm {
+        @reactive accessor name = 'Alice';
+        zip = '90210';
+      }
+      const vm = new Vm();
+      makeNonEnumerable(vm, 'name');
+
+      expect(toJS(vm)).toEqual({ name: 'Alice', zip: '90210' });
+    });
+
+    it('includes @computed values even when never previously read', () => {
+      class Vm {
+        @reactive accessor first = 'John';
+        @reactive accessor last = 'Doe';
+        @computed get fullName() {
+          return `${this.first} ${this.last}`;
+        }
+      }
+      const vm = new Vm();
+      makeNonEnumerable(vm, 'first');
+      makeNonEnumerable(vm, 'last');
+      makeNonEnumerable(vm, 'fullName');
+
+      expect(toJS(vm)).toEqual({
+        first: 'John',
+        last: 'Doe',
+        fullName: 'John Doe',
+      });
     });
   });
 
