@@ -6,7 +6,7 @@ export type ExtenderHandler = (target: Subscribable, value: unknown) => Subscrib
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ExtenderMap {
-  notify: 'always';
+  notify: 'always' | 'default';
   rateLimit: number | RateLimitOptions;
   deferred: true;
 }

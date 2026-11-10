@@ -49,7 +49,7 @@ describe('Namespaced Bindings', () => {
 
     it('caches the created handler in bindingHandlers', () => {
       const handler = getBindingHandler('attr.href');
-      expect(bindingHandlers['attr.href']).toBe(handler);
+      expect(bindingHandlers['attr.href']).toBe(handler!);
     });
 
     it('creates a handler for css.active', () => {

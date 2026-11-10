@@ -7,8 +7,6 @@ import {
   component,
   options,
 } from '#src/index.js';
-import { _resetFactoryForTesting } from '#src/componentDecorator.js';
-
 const window = new Window();
 const document = window.document;
 (globalThis as Record<string, unknown>).document = document;

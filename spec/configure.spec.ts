@@ -71,7 +71,7 @@ describe('configure (options feature flags)', () => {
     const container = createElement('div');
     const span = document.createElement('span');
     span.textContent = '{{ name }}';
-    (container as unknown as HTMLElement).appendChild(span);
+    (container as unknown as HTMLElement).appendChild(span as never);
     document.body.appendChild(container as never);
 
     applyBindings({ name }, container);

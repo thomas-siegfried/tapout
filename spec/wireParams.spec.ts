@@ -35,7 +35,7 @@ describe('wireParams', () => {
       const child = new Child();
       wireParams(child, { name: 'Bob', $raw: { something: true } });
       expect(child.name).toBe('Bob');
-      expect((child as Record<string, unknown>)['$raw']).toBeUndefined();
+      expect((child as unknown as Record<string, unknown>)['$raw']).toBeUndefined();
     });
   });
 

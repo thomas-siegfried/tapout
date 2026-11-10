@@ -1,3 +1,4 @@
 {
-  "jasmineExplorer.nodeArgv": ["--import", "tsx/esm"]
+  "jasmineExplorer.nodeArgv": ["--import", "tsx/esm"],
+  "js/ts.tsdk.path": "node_modules\\typescript\\lib"
 }

@@ -6,7 +6,9 @@ export type EventCallback<T> = (value: T) => void;
 export type Constructor<T> = abstract new (...args: any[]) => T;
 
 interface SubscriptionEntry<T> {
-  callback: EventCallback<T>;
+  // Method syntax (not a function-typed property) keeps EventSubscribable covariant in T,
+  // so an EventSubscribable<Save> can be passed where EventSubscribable<Save | Delete> is expected.
+  callback(value: T): void;
   disposed: boolean;
 }
 

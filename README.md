@@ -480,6 +480,9 @@ search.extend({ rateLimit: 200 });
 // Always notify, even when value hasn't changed
 search.extend({ notify: 'always' });
 
+// Restore the default: skip notifications when a primitive value hasn't changed
+search.extend({ notify: 'default' });
+
 // Defer notifications to the microtask queue
 search.extend({ deferred: true });
 ```

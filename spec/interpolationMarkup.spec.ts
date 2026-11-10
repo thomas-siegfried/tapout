@@ -198,8 +198,8 @@ describe('Interpolation Markup', () => {
       // Possibly with empty text nodes from leading/trailing empty strings
       const comments = children.filter(n => n.nodeType === 8);
       expect(comments.length).toBe(2);
-      expect((comments[0] as Comment).data).toContain('tap text:x');
-      expect((comments[1] as Comment).data).toContain('/tap');
+      expect((comments[0] as unknown as Comment).data).toContain('tap text:x');
+      expect((comments[1] as unknown as Comment).data).toContain('/tap');
     });
 
     it('produces correct node sequence for html expression', () => {
@@ -211,8 +211,8 @@ describe('Interpolation Markup', () => {
 
       const comments = Array.from(container.childNodes).filter(n => n.nodeType === 8);
       expect(comments.length).toBe(2);
-      expect((comments[0] as Comment).data).toContain('tap html:raw');
-      expect((comments[1] as Comment).data).toContain('/tap');
+      expect((comments[0] as unknown as Comment).data).toContain('tap html:raw');
+      expect((comments[1] as unknown as Comment).data).toContain('/tap');
     });
 
     it('produces correct node sequence for mixed text and expressions', () => {
@@ -244,8 +244,8 @@ describe('Interpolation Markup', () => {
       interpolationMarkupPreprocessor(closeNode as unknown as Node);
 
       const comments = Array.from(container.childNodes).filter(n => n.nodeType === 8);
-      expect(comments.some(c => (c as Comment).data.includes('tap if:show'))).toBe(true);
-      expect(comments.some(c => (c as Comment).data.includes('/tap'))).toBe(true);
+      expect(comments.some(c => (c as unknown as Comment).data.includes('tap if:show'))).toBe(true);
+      expect(comments.some(c => (c as unknown as Comment).data.includes('/tap'))).toBe(true);
     });
   });
 

@@ -79,7 +79,7 @@ describe('Preprocessor Infrastructure', () => {
     it('returns the handler for fluent chaining', () => {
       bindingHandlers[testKey] = {};
       const returned = addBindingPreprocessor(testKey, (v) => v);
-      expect(returned).toBe(getBindingHandler(testKey));
+      expect(returned).toBe(getBindingHandler(testKey)!);
     });
   });
 
