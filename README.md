@@ -39,9 +39,11 @@ For detailed TypeScript decorator setup and compatibility notes, see [`decorator
   - [Templates](#templates)
   - [View Models](#view-models)
   - [Params and Wiring](#params-and-wiring)
+  - [Observable References](#observable-references)
   - [Lifecycle](#lifecycle)
   - [Slots](#slots)
   - [Custom Elements](#custom-elements)
+    - [Inside SVG](#inside-svg)
 - [Utilities](#utilities)
 - [Configuration](#configuration)
 - [Acknowledgments](#acknowledgments)
@@ -842,6 +844,7 @@ options.interpolation = true;          // {{ }} text interpolation
 options.attributeInterpolation = true; // {{ }} inside HTML attributes
 options.namespacedBindings = true;     // Dot-notation: attr.href, keydown.enter
 options.filters = true;                // Pipe filters on all bindings
+options.observableRefs = true;         // `$prop` passes the raw observable in data-bind
 ```
 
 Features are activated automatically on the first `applyBindings` call. Or enable everything at once:
@@ -861,6 +864,8 @@ The `options` object also includes runtime settings:
 | `onError`                    | `null`              | Global error handler for bindings/computeds       |
 | `viewModelFactory`           | `(ctor) => new ctor()` | Factory for component view model instantiation |
 | `customElementDisplayContents` | `true`            | Custom elements use `display: contents`          |
+| `svgCustomElements`          | `true`              | Registered custom elements inside `<svg>` are rewritten to a `<g>` host |
+| `observableRefs`             | `false`             | `$prop` in `data-bind` passes the raw observable  |
 
 ### Interpolation Markup
 
@@ -1009,6 +1014,7 @@ getComponentTag(new UserCard()); // 'user-card'
 Templates can be provided as:
 
 - A **string** of HTML
+- `{ svg: '<rect/>' }` — a string of SVG markup, parsed in the SVG namespace (see [Inside SVG](#inside-svg))
 - A **DOM element** or `DocumentFragment`
 - An **array of nodes**
 - `{ element: 'template-id' }` — references a `<template>`, `<script>`, or other element by ID
@@ -1040,7 +1046,7 @@ Inside the component, `wireParams` connects parameters to `@reactive` properties
 <user-card params="name: $sharedName"></user-card>
 ```
 
-The `$`-prefix syntax passes the parent's raw `Observable` so both sides read and write the same value.
+The `$`-prefix syntax passes the parent's raw `Observable` so both sides read and write the same value. See [Observable References](#observable-references) for the same syntax in `data-bind`.
 
 You can also call `wireParams` manually:
 
@@ -1050,6 +1056,24 @@ import { wireParams } from '@thomas-siegfried/tapout';
 const result = wireParams(viewModelInstance, params);
 // result.subscriptions — array of subscriptions to dispose later
 ```
+
+### Observable References
+
+For a `@reactive` property, `name` in an expression gives you the *value*. Prefix it with `$` to get the backing observable instead (for a plain `Observable` field both forms are the same object). This works in:
+
+- the `params` attribute of a custom element (always on)
+- `data-bind` values and `component` params (opt-in via `options.observableRefs = true`, or `enableAll()`)
+
+```html
+<!-- A handler that needs the observable itself, e.g. to write a result back -->
+<div data-bind="myBinding: { size: size, result: $layout }"></div>
+
+<div data-bind="component: { name: 'user-card', params: { name: $sharedName } }"></div>
+```
+
+Only a bare reference in a value position is rewritten: `foo: $prop` and `foo: { a: $prop }` (recursively). Context keywords (`$data`, `$parent`, `$root`, `$index`, ...), strings such as `'$5'`, and larger expressions such as `$a + 1` or `fn($a)` are left alone. A `$` ref skips the automatic write-back used by two-way bindings, because the handler receives the observable and can set it directly.
+
+`$ref` is reserved as a name inside binding expressions. The option does not apply to bindings inside string templates that are rewritten by a template engine.
 
 ### Lifecycle
 
@@ -1114,6 +1138,24 @@ Any registered component is automatically detected as a custom element. Tapout a
 import { options } from '@thomas-siegfried/tapout';
 options.customElementDisplayContents = false;
 ```
+
+#### Inside SVG
+
+Browsers never render unknown SVG elements or their descendants, so a custom element such as `<svg-grid>` inside an `<svg>` would draw nothing, and `display: contents` has no effect on it. Tapout instead replaces a registered custom element in the SVG namespace with a `<g>` host before binding it:
+
+```html
+<svg>
+  <svg-badge class="badge" transform="translate(10 10)" params="radius: $radius"></svg-badge>
+</svg>
+<!-- becomes -->
+<g class="badge" transform="translate(10 10)" params="radius: $radius" data-tap-component="svg-badge">...</g>
+```
+
+- All attributes (including `params`, `data-bind`, `class`, `transform`) are copied to the `<g>`, and child nodes are moved into it. The host stays a custom element, so `params`, `$name` references and per-param updates behave exactly as on HTML custom elements.
+- Component templates are parsed as HTML by default, which would put `<rect>` and friends in the HTML namespace. Use `template: { svg: '<rect/>' }` so they are created as SVG elements. A template that starts with `<svg>` is already fine.
+- Because the element becomes a `<g>`, tag selectors like `querySelector('svg-badge')` stop matching. Use `[data-tap-component="svg-badge"]`.
+- The element passed to `applyBindings` is not itself preprocessed, so a custom element can't be the root. Elements inside `<foreignObject>` are in the HTML namespace and keep the normal `display: contents` behavior.
+- Disable the rewrite with `options.svgCustomElements = false`.
 
 ---
 
@@ -1189,6 +1231,8 @@ import { options } from '@thomas-siegfried/tapout';
 | `onError`                      | `null`                 | Global error handler for deferred task failures                     |
 | `viewModelFactory`             | `(ctor) => new ctor()` | Factory for component VM instantiation (useful for DI)              |
 | `customElementDisplayContents` | `true`                 | Apply `display: contents` to custom elements                        |
+| `svgCustomElements`            | `true`                 | Rewrite registered custom elements inside `<svg>` to a `<g>` host   |
+| `observableRefs`               | `false`                | `$prop` in `data-bind` values passes the raw observable             |
 
 
 ---

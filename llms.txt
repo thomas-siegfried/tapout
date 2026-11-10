@@ -246,6 +246,18 @@ components.register('user-card', { template: '...', viewModel: UserCard });
 <user-card params="name: $sharedName"></user-card>
 ```
 
+### Observable References
+
+`$prop` passes the backing observable of `prop` instead of its value. Always on in a custom element's `params`. In `data-bind` values and `component` params it requires `options.observableRefs = true` (or `enableAll()`); only a bare `$prop` or an object-literal property value is rewritten (not `$a + 1`, strings, or context keywords like `$data`). `$ref` is reserved.
+
+```html
+<div data-bind="myBinding: { result: $layout }"></div>
+```
+
+### SVG
+
+Inside `<svg>`, registered custom elements are rewritten to `<g data-tap-component="name">` hosts (attributes and children are moved over, stays on the custom-element path so `params`/`$name` work). Disable with `options.svgCustomElements = false`. Use `template: { svg: '<rect/>' }` so component template nodes are created in the SVG namespace (plain string templates are parsed as HTML). Tag selectors no longer match after the rewrite; use `[data-tap-component="name"]`. The root passed to `applyBindings` is not rewritten.
+
 ### Lifecycle
 
 ```typescript
@@ -353,6 +365,8 @@ options.deferUpdates = true;                    // global microtask batching
 options.onError = (err) => { ... };             // global error handler
 options.viewModelFactory = (ctor) => new ctor(); // DI hook
 options.customElementDisplayContents = true;     // display: contents on custom elements
+options.svgCustomElements = true;                // rewrite custom elements inside <svg> to <g> hosts
+options.observableRefs = false;                  // `$prop` passes the raw observable in data-bind
 ```
 
 ## Type Guards

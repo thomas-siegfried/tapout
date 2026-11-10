@@ -27,6 +27,7 @@ function resetFeatureFlags(): void {
   options.attributeInterpolation = false;
   options.namespacedBindings = false;
   options.filters = false;
+  options.observableRefs = false;
   resetConfigured();
 }
 
@@ -44,6 +45,7 @@ describe('configure (options feature flags)', () => {
     expect(options.attributeInterpolation).toBe(false);
     expect(options.namespacedBindings).toBe(false);
     expect(options.filters).toBe(false);
+    expect(options.observableRefs).toBe(false);
   });
 
   it('options.namespacedBindings enables namespaced handler resolution on applyBindings', () => {
@@ -126,6 +128,7 @@ describe('enableAll', () => {
     expect(options.attributeInterpolation).toBe(true);
     expect(options.namespacedBindings).toBe(true);
     expect(options.filters).toBe(true);
+    expect(options.observableRefs).toBe(true);
   });
 
   it('enables namespaced bindings', () => {

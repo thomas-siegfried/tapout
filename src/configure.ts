@@ -48,5 +48,6 @@ export function enableAll(): void {
   options.attributeInterpolation = true;
   options.namespacedBindings = true;
   options.filters = true;
+  options.observableRefs = true;
   ensureConfigured();
 }

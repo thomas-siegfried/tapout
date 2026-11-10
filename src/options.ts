@@ -9,6 +9,8 @@ export const options: {
   onError: ((error: unknown) => void) | null;
   viewModelFactory: ViewModelFactory;
   customElementDisplayContents: boolean;
+  svgCustomElements: boolean;
+  observableRefs: boolean;
   interpolation: boolean;
   attributeInterpolation: boolean;
   namespacedBindings: boolean;
@@ -18,6 +20,8 @@ export const options: {
   onError: null,
   viewModelFactory: defaultViewModelFactory,
   customElementDisplayContents: true,
+  svgCustomElements: true,
+  observableRefs: false,
   interpolation: false,
   attributeInterpolation: false,
   namespacedBindings: false,

@@ -13,11 +13,11 @@ import {
   allowedVirtualElementBindings,
 } from './virtualElements.js';
 import { unwrapObservable } from './utils.js';
-import { cloneNodes } from './utilsDom.js';
+import { cloneNodes, SVG_NS } from './utilsDom.js';
 import { isReadableSubscribable } from './subscribable.js';
 import { Observable } from './observable.js';
 import { parseObjectLiteral } from './expressionRewriting.js';
-import { getObservable } from './decorators.js';
+import { CONTEXT_KEYWORDS, resolveObservableRef } from './observableRefs.js';
 import { wireParams } from './wireParams.js';
 import { options } from './options.js';
 import * as components from './components.js';
@@ -155,13 +155,18 @@ allowedVirtualElementBindings['component'] = true;
 
 // ---- Custom Element Bridge ----
 
+// Marks a <g> host that replaced a custom element inside SVG (see the node preprocessor below).
+const COMPONENT_ATTR = 'data-tap-component';
+
 export function getComponentNameForNode(node: Node): string | undefined {
   if (node.nodeType !== 1) return undefined;
   const tagNameLower = ((node as Element).tagName || '').toLowerCase();
-  if (!components.isRegistered(tagNameLower)) return undefined;
-  if (tagNameLower.indexOf('-') !== -1 || ('' + node) === '[object HTMLUnknownElement]') {
+  if (components.isRegistered(tagNameLower)
+      && (tagNameLower.indexOf('-') !== -1 || ('' + node) === '[object HTMLUnknownElement]')) {
     return tagNameLower;
   }
+  const marked = (node as Element).getAttribute?.(COMPONENT_ATTR);
+  if (marked && components.isRegistered(marked)) return marked;
   return undefined;
 }
 
@@ -172,11 +177,6 @@ function isWritable(value: unknown): boolean {
 }
 
 const nativeProviderInstance = new BindingProvider();
-
-const CONTEXT_KEYWORDS = new Set([
-  '$data', '$rawData', '$root', '$parent', '$parentContext',
-  '$parents', '$component', '$componentTemplateNodes', '$index',
-]);
 
 const OBSERVABLE_REF_PATTERN = /^\$([a-zA-Z_$][\w$]*)$/;
 
@@ -254,12 +254,7 @@ function getComponentParamsFromCustomElement(
     for (const [key, propName] of Object.entries(observableRefParams)) {
       const dataContext = bindingContext.$data;
       if (dataContext && typeof dataContext === 'object') {
-        const obs = getObservable(dataContext as object, propName);
-        if (obs) {
-          result[key] = obs;
-        } else {
-          result[key] = (dataContext as Record<string, unknown>)[propName];
-        }
+        result[key] = resolveObservableRef(dataContext, propName);
       }
     }
 
@@ -305,14 +300,34 @@ export function addBindingsForCustomElement(
 // Register hooks on the binding provider to enable custom element detection
 setCustomElementHooks(getComponentNameForNode, addBindingsForCustomElement);
 
-// Apply display:contents to custom elements so they don't affect layout.
-// Opt out per-element with the "layout" attribute, or globally via options.customElementDisplayContents.
+// Custom element preprocessing, branching on namespace:
+// - SVG: browsers never render unknown SVG elements (or their descendants), and display:contents
+//   has no effect on them. A registered component tag is replaced with a <g> host carrying the
+//   COMPONENT_ATTR marker, so it stays on the custom-element path (params, $name refs, etc.).
+//   Disable via options.svgCustomElements.
+// - HTML: apply display:contents so the element doesn't affect layout. Opt out per-element with the
+//   "layout" attribute, or globally via options.customElementDisplayContents.
 addNodePreprocessor((node: Node): Node[] | void => {
-  if (!options.customElementDisplayContents) return;
-  if (node.nodeType === 1 && node.nodeName.includes('-')) {
-    const el = node as HTMLElement;
-    if (!el.hasAttribute('layout')) {
-      el.style.display = 'contents';
+  if (node.nodeType !== 1 || !node.nodeName.includes('-')) return;
+  const el = node as Element;
+
+  if (el.namespaceURI === SVG_NS) {
+    if (!options.svgCustomElements) return;
+    const name = el.localName;
+    if (!components.isRegistered(name)) return;
+
+    const host = el.ownerDocument.createElementNS(SVG_NS, 'g');
+    for (const attr of Array.from(el.attributes)) {
+      host.setAttributeNS(attr.namespaceURI, attr.name, attr.value);
     }
+    host.setAttribute(COMPONENT_ATTR, name);
+    while (el.firstChild) host.appendChild(el.firstChild);
+    el.replaceWith(host);
+    return [host];
+  }
+
+  if (!options.customElementDisplayContents) return;
+  if (!el.hasAttribute('layout')) {
+    (el as HTMLElement).style.display = 'contents';
   }
 });

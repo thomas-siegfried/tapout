@@ -284,6 +284,8 @@ function resolveTemplate(
 ): void {
   if (typeof templateConfig === 'string') {
     callback(parseHtmlFragment(templateConfig));
+  } else if (templateConfig && typeof templateConfig === 'object' && typeof (templateConfig as { svg?: unknown }).svg === 'string') {
+    callback(parseHtmlFragment((templateConfig as { svg: string }).svg, undefined, true));
   } else if (Array.isArray(templateConfig)) {
     callback(templateConfig as Node[]);
   } else if (isDocumentFragment(templateConfig)) {

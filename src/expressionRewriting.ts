@@ -1,6 +1,7 @@
 import { Observable } from './observable.js';
 import { Computed } from './computed.js';
 import { isSubscribable } from './subscribable.js';
+import { CONTEXT_KEYWORDS } from './observableRefs.js';
 
 // ---- Types ----
 
@@ -13,6 +14,8 @@ export interface KeyValuePair {
 export interface PreProcessOptions {
   valueAccessors?: boolean;
   bindingParams?: boolean;
+  // Rewrite bare `$prop` values (and `$prop` values of object-literal bindings) into `$ref($data,'prop')`.
+  observableRefs?: boolean;
   getBindingHandler?: (key: string) => { preprocess?(val: string, key: string, addBinding: (key: string, val: string) => void): string | void } | undefined;
 }
 
@@ -131,6 +134,37 @@ export function parseObjectLiteral(objectLiteralString: string): KeyValuePair[] 
   return result;
 }
 
+const OBSERVABLE_REF_PATTERN = /^\$([a-zA-Z_$][\w$]*)$/;
+
+// Rewrites `$prop` into `$ref($data,'prop')` when the whole value is a single reference, and
+// recurses into object-literal values. Anything else (including `$a + 1` or `fn($a)`) is untouched.
+// Returns the original string when nothing was rewritten.
+function rewriteObservableRefs(val: string): string {
+  const trimmed = val.trim();
+
+  const match = trimmed.match(OBSERVABLE_REF_PATTERN);
+  if (match) {
+    return CONTEXT_KEYWORDS.has(trimmed) ? val : "$ref($data,'" + match[1] + "')";
+  }
+
+  if (trimmed.charCodeAt(0) === 123 /* { */ && trimmed.charCodeAt(trimmed.length - 1) === 125 /* } */) {
+    let changed = false;
+    const parts: string[] = [];
+    for (const kv of parseObjectLiteral(trimmed)) {
+      if (kv.key === undefined || kv.value === undefined) {
+        parts.push(kv.unknown || '');
+        continue;
+      }
+      const rewritten = rewriteObservableRefs(kv.value);
+      if (rewritten !== kv.value) changed = true;
+      parts.push(JSON.stringify(kv.key) + ':' + rewritten);
+    }
+    return changed ? '{' + parts.join(',') + '}' : val;
+  }
+
+  return val;
+}
+
 export function preProcessBindings(
   bindingsStringOrKeyValueArray: string | KeyValuePair[],
   options?: PreProcessOptions,
@@ -141,6 +175,7 @@ export function preProcessBindings(
   const propertyAccessorResultStrings: string[] = [];
   const makeValueAccessors = options.valueAccessors;
   const bindingParams = options.bindingParams;
+  const observableRefs = options.observableRefs;
   const getBindingHandler = options.getBindingHandler;
 
   const keyValueArray = typeof bindingsStringOrKeyValueArray === 'string'
@@ -164,7 +199,15 @@ export function preProcessBindings(
     if (!bindingParams) {
       if (getBindingHandler && !callPreprocessHook(getBindingHandler(key))) return;
 
-      if (twoWayBindings[key] && (writableVal = getWriteableValue(val))) {
+      let isObservableRef = false;
+      if (observableRefs) {
+        const rewritten = rewriteObservableRefs(val);
+        isObservableRef = rewritten !== val && OBSERVABLE_REF_PATTERN.test(val.trim());
+        val = rewritten;
+      }
+
+      // A `$` ref hands the observable itself to the handler, so no property writer is needed.
+      if (!isObservableRef && twoWayBindings[key] && (writableVal = getWriteableValue(val))) {
         const writeKey = typeof twoWayBindings[key] === 'string' ? twoWayBindings[key] as string : key;
         propertyAccessorResultStrings.push("'" + writeKey + "':function(_z){" + writableVal + '=_z}');
       }

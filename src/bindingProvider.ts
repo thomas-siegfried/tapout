@@ -4,6 +4,8 @@ export type { AllBindingsAccessor } from './expressionRewriting.js';
 import { preProcessBindings } from './expressionRewriting.js';
 import { hasBindingValue, virtualNodeBindingValue } from './virtualElements.js';
 import { unwrapObservable } from './utils.js';
+import { options as globalOptions } from './options.js';
+import { resolveObservableRef } from './observableRefs.js';
 
 const DATA_BIND_ATTR = 'data-bind';
 
@@ -136,13 +138,14 @@ function createBindingsStringEvaluator(
 ): BindingEvaluator {
   const rewrittenBindings = preProcessBindings(bindingsString, {
     valueAccessors: options?.valueAccessors,
+    observableRefs: globalOptions.observableRefs,
     getBindingHandler,
   });
   const functionBody = "with($context){with($data||{}){return{" + rewrittenBindings + "}}}";
   // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-  const innerFn = new Function("$context", "$element", "$unwrap", "$filters", functionBody) as
-    (context: BindingContext, element: Node, unwrap: typeof unwrapObservable, filters: Record<string, Function>) => Record<string, unknown> | null;
-  return (context, element) => innerFn(context, element, unwrapObservable, _filters);
+  const innerFn = new Function("$context", "$element", "$unwrap", "$filters", "$ref", functionBody) as
+    (context: BindingContext, element: Node, unwrap: typeof unwrapObservable, filters: Record<string, Function>, ref: typeof resolveObservableRef) => Record<string, unknown> | null;
+  return (context, element) => innerFn(context, element, unwrapObservable, _filters, resolveObservableRef);
 }
 
 function createBindingsStringEvaluatorViaCache(
@@ -150,7 +153,7 @@ function createBindingsStringEvaluatorViaCache(
   cache: Record<string, BindingEvaluator>,
   options?: { valueAccessors?: boolean },
 ): BindingEvaluator {
-  const cacheKey = bindingsString + (options?.valueAccessors ? 'true' : '');
+  const cacheKey = bindingsString + (options?.valueAccessors ? 'true' : '') + (globalOptions.observableRefs ? '$ref' : '');
   return cache[cacheKey] || (cache[cacheKey] = createBindingsStringEvaluator(bindingsString, options));
 }
 

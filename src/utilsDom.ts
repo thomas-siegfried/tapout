@@ -61,11 +61,15 @@ export function moveCleanedNodesToContainerElement(nodes: ArrayLike<Node>): HTML
   return container;
 }
 
-export function parseHtmlFragment(html: string, documentContext?: Document): Node[] {
+export const SVG_NS = 'http://www.w3.org/2000/svg';
+
+// With `svg` set, the markup is parsed in an SVG context so elements like <rect/> are created in the
+// SVG namespace. Parsing inside a <div> would make them HTML elements, which browsers never render.
+export function parseHtmlFragment(html: string, documentContext?: Document, svg?: boolean): Node[] {
   const doc = documentContext || document;
-  const div = doc.createElement('div');
-  div.innerHTML = html;
-  return Array.from(div.childNodes);
+  const container = svg ? doc.createElementNS(SVG_NS, 'svg') : doc.createElement('div');
+  container.innerHTML = html;
+  return Array.from(container.childNodes);
 }
 
 export function domNodeIsAttachedToDocument(node: Node): boolean {

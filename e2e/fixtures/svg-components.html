@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SVG Components E2E</title>
+</head>
+<body>
+  <div id="app">
+    <svg id="stage" width="300" height="200" viewBox="0 0 300 200">
+      <svg-badge id="badge" class="b" transform="translate(10 10)" params="radius: radius"></svg-badge>
+    </svg>
+  </div>
+
+  <script type="module">
+    import { Observable, components, applyBindings } from '/dist/index.js';
+
+    components.register('svg-badge', {
+      template: { svg: '<circle id="badge-circle" cx="50" cy="50" data-bind="attr: { r: radius }" fill="tomato"></circle>' },
+      viewModel: function(params) {
+        this.radius = params.radius;
+      },
+      synchronous: true,
+    });
+
+    const vm = { radius: new Observable(40) };
+    window.vm = vm;
+
+    applyBindings(vm, document.getElementById('app'));
+  </script>
+</body>
+</html>
